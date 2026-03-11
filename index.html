@@ -17,7 +17,7 @@
   cv.width=cv.height=s;
   const ctx=cv.getContext('2d');
   // Fond rouge
-  ctx.fillStyle='#ff3b30';
+  ctx.fillStyle='#ffffff';
   const r=36;
   ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(s-r,0);ctx.quadraticCurveTo(s,0,s,r);
   ctx.lineTo(s,s-r);ctx.quadraticCurveTo(s,s,s-r,s);
@@ -124,7 +124,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .row:last-child{border-bottom:none;}
 /* HERO */
 /* HERO — round bubble left, info right */
-.v-hero{margin:12px 16px 0;background:var(--card);border-radius:14px;padding:16px;}
+.v-hero{margin:12px 16px 0;background:var(--card);border-radius:14px;padding:16px;position:relative;}
 .v-hero-inner{display:flex;align-items:center;gap:14px;}
 .v-avatar{width:74px;height:74px;border-radius:50%;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#e8e8ed,#d1d1d6);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;border:2.5px solid var(--border);}
 .v-avatar img{width:100%;height:100%;object-fit:cover;}
@@ -380,19 +380,19 @@ tes données sur tous tes appareils</div>
     <div class="stats-grid">
       <div class="stat full" onclick="goTo('stats')">
         <div>
-          <div class="stat-lbl" id="lbl-total-spent">Total dépensé</div>
-          <div class="stat-val red" id="sTotal">¥0</div>
+          <div class="stat-lbl" id="lbl-total-spent"></div>
+          <div class="stat-val" style="color:var(--blue)" id="sTotal">¥0</div>
           <div class="stat-sub" id="lbl-tap-stats">Appuyer pour les statistiques</div>
         </div>
         <span style="font-size:22px;opacity:.3">›</span>
       </div>
       <div class="stat">
-        <div class="stat-lbl" id="lbl-this-year">Cette année</div>
+        <div class="stat-lbl" id="lbl-this-year"></div>
         <div class="stat-val" id="sYear">¥0</div>
         <div class="stat-sub" id="sYearLbl"></div>
       </div>
       <div class="stat">
-        <div class="stat-lbl" id="lbl-this-month">Ce mois</div>
+        <div class="stat-lbl" id="lbl-this-month"></div>
         <div class="stat-val" id="sMonth">¥0</div>
         <div class="stat-sub" id="sMonthLbl"></div>
       </div>
@@ -462,6 +462,10 @@ tes données sur tous tes appareils</div>
         <label class="form-lbl" id="lbl-vi-tech">Infos techniques</label>
         <div class="card">
           <div class="fi-row">
+            <span class="fi-ico">🏷️</span>
+            <input class="fi" type="text" id="viId" placeholder="Identifiant (ex: E46, NB, JZX100…)">
+          </div>
+          <div class="fi-row">
             <span class="fi-ico">📅</span>
             <input class="fi" type="number" id="viYear" placeholder="Année (ex: 2019)" inputmode="numeric">
           </div>
@@ -497,7 +501,7 @@ tes données sur tous tes appareils</div>
           </div>
           <div class="fi-row">
             <span class="fi-ico">📆</span>
-            <input class="fi" type="date" id="viPurchaseDate" style="text-align:left">
+            <input class="fi" type="date" id="viPurchaseDate" style="-webkit-appearance:none;text-align:center;display:block;width:100%">
           </div>
           <div class="fi-row">
             <span class="fi-ico">🏪</span>
@@ -551,6 +555,14 @@ tes données sur tous tes appareils</div>
       <div class="form-sec" id="shopSection">
         <label class="form-lbl" id="lbl-purchased-at">Acheté chez</label>
         <div class="shop-row" id="shopRow"></div>
+        <div id="customShopRow" style="display:none;margin-top:8px">
+          <div class="card">
+            <div class="fi-row" style="border-radius:var(--r)">
+              <span class="fi-ico">🏪</span>
+              <input class="fi" type="text" id="dCustomShop" placeholder="Nom du magasin…">
+            </div>
+          </div>
+        </div>
         <div style="margin-top:10px">
           <div class="card">
             <div class="fi-row" style="border-radius:var(--r)">
@@ -571,16 +583,13 @@ tes données sur tous tes appareils</div>
           </div>
           <div class="fi-row">
             <span class="fi-ico">📅</span>
-            <input class="fi" type="date" id="dDate" style="text-align:left">
+            <input class="fi" type="date" id="dDate" style="-webkit-appearance:none;text-align:center;display:block;width:100%">
           </div>
           <div class="fi-row" id="kmRow">
             <span class="fi-ico">📍</span>
-            <input class="fi" type="number" id="dKm" placeholder="Kilométrage (optionnel)" inputmode="numeric">
+            <input class="fi" type="number" id="dKm" placeholder="Kilométrage (optionnel)" inputmode="numeric"><input type="hidden" id="dNotes" value="">
           </div>
-          <div class="fi-row">
-            <span class="fi-ico">💬</span>
-            <input class="fi" type="text" id="dNotes" placeholder="Notes (optionnel)">
-          </div>
+
         </div>
       </div>
       <div class="form-sec">
@@ -639,7 +648,67 @@ tes données sur tous tes appareils</div>
         </div>
       </div>
     </div>
+    <div class="sec">
+      <div class="card">
+        <div class="set-row" onclick="exportCSV()">
+          <div class="set-ico" style="background:#e8ffe8">📤</div>
+          <div class="set-txt">
+            <div style="font-size:15px">Exporter en CSV</div>
+            <div class="set-sub" id="lbl-export-sub">Sauvegarder toutes les dépenses</div>
+          </div>
+          <span class="set-chev">›</span>
+        </div>
+      </div>
+    </div>
     <div class="sec"><div class="card"><div class="row" style="justify-content:center"><span style="font-size:12px;color:var(--text3)">AutoLog · données locales</span></div></div></div>
+  </div>
+</div>
+
+<!-- MAINTENANCE / RAPPELS -->
+<div class="screen" id="s-maint">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div class="hdr-title">🔔 <span id="lbl-maint-title">Entretien</span></div>
+      <button class="hdr-circ" onclick="openAddReminder()">+</button>
+    </div>
+  </div>
+  <div class="scroll" id="maintListEl"></div>
+</div>
+
+<!-- SHEET: ADD REMINDER -->
+<div class="ov" id="reminderModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="lbl-reminder-title">Nouveau rappel</div>
+    <div class="sheet-body">
+      <div class="card">
+        <div class="fi-row">
+          <span class="fi-ico">📝</span>
+          <input class="fi" type="text" id="rName" placeholder="Ex: Vidange, Shaken, Pneus…">
+        </div>
+        <div class="fi-row">
+          <span class="fi-ico">📅</span>
+          <input class="fi" type="date" id="rDate" style="-webkit-appearance:none;text-align:center;width:100%">
+        </div>
+        <div class="fi-row">
+          <span class="fi-ico">🔁</span>
+          <select class="fi" id="rRecur" style="color:var(--text)">
+            <option value="">Pas de répétition</option>
+            <option value="3m">Tous les 3 mois</option>
+            <option value="6m">Tous les 6 mois</option>
+            <option value="1y">Tous les ans</option>
+            <option value="2y">Tous les 2 ans</option>
+          </select>
+        </div>
+        <div class="fi-row" style="border-radius:0 0 var(--r) var(--r)">
+          <span class="fi-ico">💬</span>
+          <input class="fi" type="text" id="rNotes" placeholder="Notes (optionnel)">
+        </div>
+      </div>
+      <button class="btn-full" onclick="saveReminder()" id="lbl-save-reminder">Enregistrer</button>
+      <button class="btn-full" id="addToCalBtn" onclick="addReminderToCalendar()" style="background:var(--green)">📅 Ajouter au calendrier</button>
+      <button class="btn-full ghost" onclick="closeSheet('reminderModal')" id="lbl-cancel-reminder">Annuler</button>
+    </div>
   </div>
 </div>
 
@@ -658,8 +727,12 @@ tes données sur tous tes appareils</div>
     <span class="tab-lbl" style="color:var(--blue)" id="tab-lbl-add">Ajouter</span>
   </button>
   <button class="tab" id="tab-wish" onclick="goTo('wish')">
-    <div class="tab-ico"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+    <div class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.57l1.65-8.53H6"/></svg></div>
     <span class="tab-lbl" id="tab-lbl-wish">Courses</span>
+  </button>
+  <button class="tab" id="tab-maint" onclick="goTo('maint')">
+    <div class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+    <span class="tab-lbl" id="tab-lbl-maint">Entretien</span>
   </button>
   <button class="tab" id="tab-settings" onclick="goTo('settings')">
     <div class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
@@ -729,7 +802,7 @@ const STRINGS = {
     'lbl-del-exp-q':'Supprimer cette dépense ?','lbl-del-v-q':'Supprimer ce véhicule ?',
     'lbl-delete':'Supprimer','lbl-delete2':'Supprimer',
     'tab-lbl-home':'Accueil','tab-lbl-list':'Dépenses','tab-lbl-add':'Ajouter',
-    'tab-lbl-wish':'Courses','tab-lbl-settings':'Réglages',
+    'tab-lbl-wish':'Courses','tab-lbl-maint':'Entretien','tab-lbl-settings':'Réglages',
     no_exp:'Aucune dépense.\nCommencez par en ajouter une !',
     wish_empty:'Aucun article.\nAjoutez des pièces à acheter !',
     new_expense:'Nouvelle dépense',edit_expense:'Modifier la dépense',
@@ -764,7 +837,7 @@ const STRINGS = {
     'lbl-del-exp-q':'Delete this expense?','lbl-del-v-q':'Delete this vehicle?',
     'lbl-delete':'Delete','lbl-delete2':'Delete',
     'tab-lbl-home':'Home','tab-lbl-list':'Expenses','tab-lbl-add':'Add',
-    'tab-lbl-wish':'Wishlist','tab-lbl-settings':'Settings',
+    'tab-lbl-wish':'Wishlist','tab-lbl-maint':'Maintenance','tab-lbl-settings':'Settings',
     no_exp:'No expenses.\nStart by adding one!',
     wish_empty:'No items.\nAdd parts to buy!',
     new_expense:'New expense',edit_expense:'Edit expense',
@@ -799,7 +872,7 @@ const STRINGS = {
     'lbl-del-exp-q':'この支出を削除しますか？','lbl-del-v-q':'この車を削除しますか？',
     'lbl-delete':'削除','lbl-delete2':'削除',
     'tab-lbl-home':'ホーム','tab-lbl-list':'支出','tab-lbl-add':'追加',
-    'tab-lbl-wish':'ウィッシュ','tab-lbl-settings':'設定',
+    'tab-lbl-wish':'ウィッシュ','tab-lbl-maint':'整備','tab-lbl-settings':'設定',
     no_exp:'支出なし。\n最初の支出を追加しましょう！',
     wish_empty:'リストは空です。\n購入予定の部品を追加しましょう！',
     new_expense:'新しい支出',edit_expense:'支出を編集',
@@ -863,7 +936,7 @@ function setLang(l){
 const SHOPS=[
   {id:'amazon', name:'Amazon', logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=amazon.co.jp" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['amazon.co.jp','amazon.com','amzn']},
   {id:'yahoo',  name:'Yahoo!', logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=yahoo.co.jp" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['auctions.yahoo.co.jp','yahoo.co.jp','yjc.to']},
-  {id:'mercari',name:'Mercari',logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=mercari.com" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['jp.mercari.com','mercari.com']},
+  {id:'mercari',name:'Mercari',logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=jp.mercari.com" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['jp.mercari.com','mercari.com']},
   {id:'rakuten',name:'Rakuten',logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=rakuten.co.jp" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['rakuten.co.jp','raku10.jp']},
   {id:'other',  name:'Autre',  logo:'🌐', domains:[]},
 ];
@@ -887,7 +960,12 @@ function buildShopRow(){
     </button>`).join('');
 }
 
-function selShop(id){ selectedShop=selectedShop===id?null:id; buildShopRow(); }
+function selShop(id){
+  selectedShop=selectedShop===id?null:id;
+  buildShopRow();
+  const customRow=document.getElementById('customShopRow');
+  if(customRow) customRow.style.display=(selectedShop==='other')?'block':'none';
+}
 
 function onLinkInput(url){
   const det=detectShop(url);
@@ -1113,7 +1191,7 @@ function updateAccountUI(user){
 }
 
 function renderAll(){
-  renderVChips();renderHero();renderStats();renderChart();renderList();renderWishList();renderSettings();
+  renderVChips();renderHero();renderStats();renderChart();renderList();renderWishList();renderSettings();renderMaintList();
 }
 
 /* NAV */
@@ -1147,6 +1225,8 @@ function resetForm(wish){
   document.getElementById('dKm').value='';
   document.getElementById('dNotes').value='';
   document.getElementById('dLink').value='';
+  const csr=document.getElementById('customShopRow');if(csr)csr.style.display='none';
+  const dcs=document.getElementById('dCustomShop');if(dcs)dcs.value='';
   document.getElementById('linkPreview').style.display='none';
   document.getElementById('kmRow').style.display=wish?'none':'';
   document.getElementById('submitBtn').className=wish?'btn-full orange':'btn-full';
@@ -1172,6 +1252,8 @@ function openEdit(id,wish=false){
   document.getElementById('dKm').value=e.km||'';
   document.getElementById('dNotes').value=e.notes||'';
   document.getElementById('dLink').value=e.link||'';
+  const csrE=document.getElementById('customShopRow');if(csrE)csrE.style.display=(e.shop==='other')?'block':'none';
+  const dcsE=document.getElementById('dCustomShop');if(dcsE)dcsE.value=e.customShop||'';
   if(e.link) onLinkInput(e.link); else document.getElementById('linkPreview').style.display='none';
   document.getElementById('kmRow').style.display=wish?'none':'';
   document.getElementById('submitBtn').className=wish?'btn-full orange':'btn-full';
@@ -1194,9 +1276,10 @@ function submitForm(){
     cat,amount,date:dateVal,
     desc:document.getElementById('dDesc').value.trim(),
     km:wish?'':document.getElementById('dKm').value.trim(),
-    notes:document.getElementById('dNotes').value.trim(),
+    notes:'',
     link:document.getElementById('dLink').value.trim(),
     shop:selectedShop,
+    customShop:selectedShop==='other'?(document.getElementById('dCustomShop')?.value.trim()||''):'',
   };
   if(wish){
     if(editingId){db.wish=db.wish.map(e=>e.id===editingId?{...e,...payload}:e);toast(s('wish_updated'));}
@@ -1325,13 +1408,14 @@ function renderHero(){
   // Info chips (year, engine, fuel, km)
   const chips = [];
   if(v.info){
+    if(v.info.vid) chips.push(`<span class="v-chip" style="font-weight:700;color:var(--blue)">${esc(v.info.vid)}</span>`);
     if(v.info.year) chips.push(`<span class="v-chip">${esc(v.info.year)}</span>`);
     if(v.info.engine) chips.push(`<span class="v-chip">${esc(v.info.engine)}</span>`);
     if(v.info.fuel) chips.push(`<span class="v-chip">⛽ ${esc(v.info.fuel)}</span>`);
     if(v.info.km) chips.push(`<span class="v-chip km">📍 ${parseInt(v.info.km).toLocaleString('ja-JP')} km</span>`);
   }
 
-  const depStr = lang==='ja' ? `${exps.length}件 · ${fmt(total)}` : `${exps.length} dép. · ${fmt(total)}`;
+  const depStr = fmt(total);
 
   el.innerHTML = `<div class="v-hero-inner">
     <div class="v-avatar" onclick="triggerUpload()">
@@ -1342,7 +1426,9 @@ function renderHero(){
       <div class="v-hero-name">${esc(v.name)}</div>
       <div class="v-hero-sub">${depStr}</div>
       ${chips.length ? `<div class="v-hero-chips">${chips.join('')}</div>` : ''}
-      <button class="v-edit-btn" onclick="openVInfo()">✏️ ${editLbl}</button>
+      <button onclick="openVInfo()" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;padding:4px;color:var(--text3)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
     </div>
   </div>`;
 }
@@ -1521,6 +1607,7 @@ function openVInfo(){
   const v=cv();
   document.getElementById('viName').value=v.name;
   const nfo=v.info||{};
+  document.getElementById('viId')?.setAttribute('value', nfo.vid||'');
   document.getElementById('viYear').value=nfo.year||'';
   document.getElementById('viEngine').value=nfo.engine||'';
   document.getElementById('viFuel').value=nfo.fuel||'';
@@ -1576,6 +1663,7 @@ function saveVInfo(){
     v.name=newName; v.isDefault=false;
   }
   v.info={
+    vid:document.getElementById('viId')?.value.trim()||'',
     year:document.getElementById('viYear').value.trim(),
     engine:document.getElementById('viEngine').value.trim(),
     fuel:document.getElementById('viFuel').value.trim(),
@@ -1702,6 +1790,181 @@ function showAccountSheet(){
   document.getElementById('accountSheet').classList.add('show');
 }
 
+/* EXPORT CSV */
+function exportCSV(){
+  const vName=cv().name;
+  const rows=[['Date','Catégorie','Montant','Description','Km','Magasin','Lien']];
+  ce().forEach(e=>{
+    rows.push([
+      e.date, e.cat, e.amount,
+      (e.desc||'').replace(/,/g,''),
+      e.km||'',
+      e.customShop||(e.shop||''),
+      e.link||''
+    ]);
+  });
+  const csv=rows.map(r=>r.join(',')).join('
+');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`autolog_${vName.replace(/\s/g,'_')}_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Export CSV téléchargé ✓');
+}
+
+/* MAINTENANCE / RAPPELS */
+let editingReminderId=null;
+
+function dbReminders(){
+  if(!db.reminders) db.reminders={};
+  const vn=cv().name;
+  if(!db.reminders[vn]) db.reminders[vn]=[];
+  return db.reminders[vn];
+}
+function setReminders(arr){ db.reminders[cv().name]=arr; }
+
+function openAddReminder(id=null){
+  editingReminderId=id;
+  const rems=dbReminders();
+  const r=id?rems.find(x=>x.id===id):null;
+  document.getElementById('rName').value=r?r.name:'';
+  document.getElementById('rDate').value=r?r.date:'';
+  document.getElementById('rRecur').value=r?r.recur:'';
+  document.getElementById('rNotes').value=r?r.notes:'';
+  document.getElementById('lbl-reminder-title').textContent=id?'Modifier le rappel':'Nouveau rappel';
+  document.getElementById('addToCalBtn').style.display=id?'block':'none';
+  document.getElementById('reminderModal').classList.add('show');
+}
+
+function saveReminder(){
+  const name=document.getElementById('rName').value.trim();
+  if(!name){toast('Entrez un nom');return;}
+  const date=document.getElementById('rDate').value;
+  if(!date){toast('Entrez une date');return;}
+  const r={
+    id:editingReminderId||Date.now(),
+    name, date,
+    recur:document.getElementById('rRecur').value,
+    notes:document.getElementById('rNotes').value.trim(),
+    done:false
+  };
+  const rems=dbReminders();
+  if(editingReminderId){
+    setReminders(rems.map(x=>x.id===editingReminderId?r:x));
+  } else {
+    rems.push(r);
+    setReminders(rems.sort((a,b)=>a.date.localeCompare(b.date)));
+  }
+  save(); renderMaintList(); closeSheet('reminderModal');
+  toast('Rappel enregistré ✓');
+}
+
+function deleteReminder(id){
+  setReminders(dbReminders().filter(x=>x.id!==id));
+  save(); renderMaintList();
+  toast('Rappel supprimé');
+}
+
+function toggleReminderDone(id){
+  const rems=dbReminders();
+  const r=rems.find(x=>x.id===id);
+  if(r){ r.done=!r.done; save(); renderMaintList(); }
+}
+
+function addReminderToCalendar(){
+  const name=document.getElementById('rName').value.trim();
+  const date=document.getElementById('rDate').value;
+  const notes=document.getElementById('rNotes').value.trim();
+  if(!name||!date){toast('Remplissez le nom et la date');return;}
+  // Format date for calendar URL: YYYYMMDD
+  const d=date.replace(/-/g,'');
+  // Try webcal / data URI approach — works on iOS Safari
+  const title=encodeURIComponent('AutoLog: '+name);
+  const desc=encodeURIComponent(notes||'Rappel AutoLog');
+  // ICS file download
+  const ics=[
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//AutoLog//FR',
+    'BEGIN:VEVENT',
+    `DTSTART;VALUE=DATE:${d}`,
+    `DTEND;VALUE=DATE:${d}`,
+    `SUMMARY:AutoLog: ${name}`,
+    `DESCRIPTION:${notes||''}`,
+    'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY',`DESCRIPTION:AutoLog: ${name}`,'END:VALARM',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('
+');
+  const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`rappel_${name.replace(/\s/g,'_')}.ics`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Fichier .ics téléchargé — ouvrez-le pour ajouter au calendrier ✓');
+}
+
+function renderMaintList(){
+  const el=document.getElementById('maintListEl'); if(!el) return;
+  const rems=dbReminders();
+  if(!rems.length){
+    el.innerHTML=`<div class="empty"><div class="empty-ico">🔔</div><p>Aucun rappel.
+Ajoutez votre prochain shaken,
+changement d'huile…</p></div>`;
+    return;
+  }
+  const now=new Date(); const today=now.toISOString().split('T')[0];
+  const pending=rems.filter(r=>!r.done).sort((a,b)=>a.date.localeCompare(b.date));
+  const done=rems.filter(r=>r.done);
+  let html='';
+  if(pending.length){
+    html+=`<div class="mo-hdr"><span>À venir</span><span class="mo-amt">${pending.length}</span></div>`;
+    html+='<div class="card" style="margin:0 16px 16px">';
+    pending.forEach((r,i)=>{
+      const dDate=new Date(r.date+'T00:00:00');
+      const diffDays=Math.ceil((dDate-now)/(1000*60*60*24));
+      const overdue=diffDays<0;
+      const soon=diffDays>=0&&diffDays<=14;
+      const color=overdue?'var(--red)':soon?'var(--orange)':'var(--text2)';
+      const badge=overdue?`<span style="background:#fff0ee;color:var(--red);font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px">En retard</span>`:
+                  soon?`<span style="background:#fff8e1;color:var(--orange);font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px">Bientôt</span>`:'';
+      const recurLabel={'':{fr:'',en:'',ja:''},'3m':{fr:'3 mois',en:'3 months',ja:'3ヶ月'},'6m':{fr:'6 mois',en:'6 months',ja:'6ヶ月'},'1y':{fr:'1 an',en:'yearly',ja:'毎年'},'2y':{fr:'2 ans',en:'every 2y',ja:'2年'}}[r.recur]||{};
+      const recurStr=r.recur?(recurLabel[lang]||recurLabel.fr||r.recur):'';
+      html+=`<div class="erow" style="border-bottom:${i<pending.length-1?'.5px solid var(--border)':'none'};gap:10px" onclick="openAddReminder(${r.id})">
+        <div style="font-size:22px">🔔</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:600;font-family:-apple-system,sans-serif">${esc(r.name)}</div>
+          <div style="font-size:12px;color:${color};font-family:-apple-system,sans-serif;margin-top:2px">
+            ${new Date(r.date+'T00:00:00').toLocaleDateString(lang==='ja'?'ja-JP':'fr-FR',{day:'numeric',month:'long',year:'numeric'})}
+            ${recurStr?` · 🔁 ${recurStr}`:''}
+            ${badge}
+          </div>
+          ${r.notes?`<div style="font-size:12px;color:var(--text3);margin-top:2px">${esc(r.notes)}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <button onclick="event.stopPropagation();toggleReminderDone(${r.id})" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;font-family:-apple-system,sans-serif">✓</button>
+          <button onclick="event.stopPropagation();deleteReminder(${r.id})" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer">🗑️</button>
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+  if(done.length){
+    html+=`<div class="mo-hdr" style="opacity:.5"><span>✅ Fait</span><span class="mo-amt">${done.length}</span></div>`;
+    html+='<div class="card" style="margin:0 16px 16px;opacity:.45">';
+    done.forEach((r,i)=>{
+      html+=`<div class="erow" style="border-bottom:${i<done.length-1?'.5px solid var(--border)':'none'}">
+        <div style="font-size:22px;opacity:.5">🔔</div>
+        <div style="flex:1;text-decoration:line-through;color:var(--text3);font-family:-apple-system,sans-serif">${esc(r.name)}</div>
+        <button onclick="toggleReminderDone(${r.id})" style="background:none;border:none;color:var(--blue);font-size:13px;cursor:pointer;font-family:-apple-system,sans-serif">↩</button>
+        <button onclick="deleteReminder(${r.id})" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer">🗑️</button>
+      </div>`;
+    });
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
 /* HELPERS */
 function selCat(btn){document.querySelectorAll('.cp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');cat=btn.dataset.cat;}
 function setF(btn){document.querySelectorAll('.fp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filt=btn.dataset.f;renderList();}
@@ -1710,7 +1973,7 @@ function closeSheet(id){document.getElementById(id).classList.remove('show');}
 function closeAlert(id){document.getElementById(id).classList.remove('show');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-['vModal','accountSheet'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id);}));
+['vModal','accountSheet','reminderModal'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id);}));
 ['delExpAlert','delVAlert'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeAlert(id);}));
 document.getElementById('vName').addEventListener('keydown',e=>{if(e.key==='Enter')addVehicle();});
 document.getElementById('loginPass')?.addEventListener('keydown',e=>{if(e.key==='Enter')loginEmail();});
