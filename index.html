@@ -931,20 +931,25 @@ async function cloudSave(){
   if(!_currentUser||!_fbReady) return;
   try{
     const {doc,setDoc}=window._fbFns;
+    const now=Date.now();
+    db.updatedAt=now;
+    localStorage.setItem('autolog5',JSON.stringify(db));
     // Photos are large — store separately to stay under 1MB Firestore limit
     const dbNoPhotos=JSON.parse(JSON.stringify(db));
     const photos={};
     dbNoPhotos.vehicles.forEach((v,i)=>{
       if(v.photo){photos['v'+i]=v.photo;v.photo='__ref:v'+i;}
     });
-    const {doc:d2,setDoc:s2}=window._fbFns;
-    await setDoc(doc(window._fbDb,'users',_currentUser.uid,'data','main'),{payload:JSON.stringify(dbNoPhotos),updatedAt:Date.now()});
-    // Save photos in separate doc (only if changed)
+    await setDoc(doc(window._fbDb,'users',_currentUser.uid,'data','main'),{payload:JSON.stringify(dbNoPhotos),updatedAt:now});
     if(Object.keys(photos).length>0){
-      await setDoc(doc(window._fbDb,'users',_currentUser.uid,'data','photos'),{payload:JSON.stringify(photos),updatedAt:Date.now()});
+      await setDoc(doc(window._fbDb,'users',_currentUser.uid,'data','photos'),{payload:JSON.stringify(photos),updatedAt:now});
     }
     setSyncStatus('ok');
-  }catch(e){setSyncStatus('err');console.warn('cloudSave error',e);}
+    console.log('cloudSave OK', new Date(now).toLocaleTimeString());
+  }catch(e){
+    console.error('cloudSave error:', e.code, e.message);
+    setSyncStatus('err');
+  }
 }
 
 async function cloudLoad(uid){
@@ -952,7 +957,17 @@ async function cloudLoad(uid){
   try{
     const {doc,getDoc}=window._fbFns;
     const snap=await getDoc(doc(window._fbDb,'users',uid,'data','main'));
-    if(!snap.exists()) return; // first time — keep local data, it will be uploaded
+    if(!snap.exists()){
+      // Premier login sur ce compte — upload les données locales si elles existent
+      const hasLocalData = ce().length > 0 || db.vehicles.length > 1 || db.wish.length > 0;
+      if(hasLocalData){
+        console.log('Premier login — upload données locales vers Firestore');
+        await cloudSave();
+      } else {
+        setSyncStatus('ok');
+      }
+      return;
+    }
     const remote=JSON.parse(snap.data().payload);
     // Restore photos
     const snapPh=await getDoc(doc(window._fbDb,'users',uid,'data','photos'));
@@ -960,13 +975,26 @@ async function cloudLoad(uid){
     remote.vehicles.forEach((v,i)=>{
       if(v.photo&&v.photo.startsWith('__ref:'))v.photo=photos[v.photo.slice(6)]||null;
     });
-    db=dbMigrate(remote);
-    lang=db.lang;
-    localStorage.setItem('autolog5',JSON.stringify(db));
-    ['fr','en','ja'].forEach(x=>document.getElementById('lp-'+x).classList.toggle('active',x===lang));
-    applyI18n(); renderAll();
+    // Merge strategy : prendre le plus récent entre local et remote
+    const localUpdatedAt = db.updatedAt||0;
+    const remoteUpdatedAt = snap.data().updatedAt||0;
+    if(remoteUpdatedAt >= localUpdatedAt){
+      console.log('Chargement données cloud (plus récentes)');
+      db=dbMigrate(remote);
+      db.updatedAt=remoteUpdatedAt;
+      lang=db.lang;
+      localStorage.setItem('autolog5',JSON.stringify(db));
+      ['fr','en','ja'].forEach(x=>document.getElementById('lp-'+x).classList.toggle('active',x===lang));
+      applyI18n(); renderAll();
+    } else {
+      console.log('Données locales plus récentes — upload vers cloud');
+      await cloudSave();
+    }
     setSyncStatus('ok');
-  }catch(e){setSyncStatus('err');console.warn('cloudLoad error',e);}
+  }catch(e){
+    console.error('cloudLoad error:', e.code, e.message);
+    setSyncStatus('err');
+  }
 }
 
 // ── SYNC STATUS ─────────────────────────────────────────────────────────────
