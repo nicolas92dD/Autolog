@@ -62,16 +62,22 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid var(--border);min-height:48px;font-family:-apple-system,sans-serif;}
 .row:last-child{border-bottom:none;}
 /* HERO */
-.v-hero{margin:12px 16px 0;background:var(--card);border-radius:14px;overflow:hidden;}
-.v-hero-photo{width:100%;height:156px;object-fit:cover;display:block;cursor:pointer;}
-.v-hero-ph{height:130px;background:linear-gradient(135deg,#e8e8ed,#d1d1d6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--text2);}
-.v-hero-ph span{font-size:34px;}.v-hero-ph p{font-size:13px;}
-.v-hero-info{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
-.v-hero-name{font-size:17px;font-weight:700;letter-spacing:-.3px;}
-.v-hero-sub{font-size:13px;color:var(--text2);margin-top:2px;}
-.v-hero-btns{display:flex;gap:8px;}
-.v-btn{background:rgba(0,0,0,.06);border:none;border-radius:8px;padding:6px 10px;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:4px;}
-.v-btn span{font-size:12px;font-weight:500;color:var(--text2);font-family:-apple-system,sans-serif;}
+/* HERO — round bubble left, info right */
+.v-hero{margin:12px 16px 0;background:var(--card);border-radius:14px;padding:16px;}
+.v-hero-inner{display:flex;align-items:center;gap:14px;}
+.v-avatar{width:74px;height:74px;border-radius:50%;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#e8e8ed,#d1d1d6);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;border:2.5px solid var(--border);}
+.v-avatar img{width:100%;height:100%;object-fit:cover;}
+.v-avatar-ph{font-size:30px;}
+.v-avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;border-radius:50%;}
+.v-avatar:active .v-avatar-overlay{opacity:1;}
+.v-avatar-overlay span{font-size:18px;}
+.v-info{flex:1;min-width:0;}
+.v-hero-name{font-size:17px;font-weight:700;letter-spacing:-.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.v-hero-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.v-hero-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.v-chip{font-size:11px;font-weight:500;background:var(--bg);border-radius:6px;padding:3px 7px;color:var(--text2);font-family:-apple-system,sans-serif;}
+.v-chip.km{color:var(--blue);}
+.v-edit-btn{background:none;border:none;color:var(--blue);font-size:13px;font-weight:500;font-family:-apple-system,sans-serif;cursor:pointer;padding:0;margin-top:6px;display:block;}
 /* VCHIPS */
 .vchips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 0;scrollbar-width:none;}
 .vchips::-webkit-scrollbar{display:none;}
@@ -164,6 +170,85 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
 .fbar::-webkit-scrollbar{display:none;}
 .fp{padding:6px 13px;border-radius:40px;border:1.5px solid var(--border);background:var(--card);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:-apple-system,sans-serif;}
 .fp.active{background:var(--blue);border-color:var(--blue);color:white;}
+/* VEHICLE INFO SCREEN */
+function openVInfo(){
+  const v=cv();
+  document.getElementById('viName').value=v.name;
+  const nfo=v.info||{};
+  document.getElementById('viYear').value=nfo.year||'';
+  document.getElementById('viEngine').value=nfo.engine||'';
+  document.getElementById('viFuel').value=nfo.fuel||'';
+  document.getElementById('viColor').value=nfo.color||'';
+  document.getElementById('viKm').value=nfo.km||'';
+  document.getElementById('viPlate').value=nfo.plate||'';
+  document.getElementById('viPrice').value=nfo.price||'';
+  document.getElementById('viPurchaseDate').value=nfo.purchaseDate||'';
+  document.getElementById('viDealer').value=nfo.dealer||'';
+  document.getElementById('viNotes').value=nfo.notes||'';
+  // Avatar
+  const va=document.getElementById('vinfoAvatar');
+  if(v.photo){
+    va.innerHTML=`<img src="${v.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"><div class="v-avatar-overlay"><span>📷</span></div>`;
+  } else {
+    va.innerHTML=`<span style="font-size:36px">🚗</span><div class="v-avatar-overlay"><span>📷</span></div>`;
+  }
+  // i18n labels
+  const labels={
+    'lbl-vi-name':{fr:'Nom du véhicule',en:'Vehicle name',ja:'車名'},
+    'lbl-vi-tech':{fr:'Infos techniques',en:'Technical info',ja:'仕様'},
+    'lbl-vi-purchase':{fr:'Achat',en:'Purchase',ja:'購入'},
+    'lbl-vi-notes':{fr:'Notes',en:'Notes',ja:'メモ'},
+    'lbl-vinfo-back':{fr:'Retour',en:'Back',ja:'戻る'},
+    'lbl-vinfo-title':{fr:'Infos véhicule',en:'Vehicle info',ja:'車の情報'},
+    'lbl-vinfo-save':{fr:'Enregistrer',en:'Save',ja:'保存'},
+    'lbl-vinfo-save2':{fr:'Enregistrer',en:'Save',ja:'保存'},
+  };
+  Object.entries(labels).forEach(([id,vals])=>{const el=document.getElementById(id);if(el) el.textContent=vals[lang]||vals.fr;});
+  // placeholders
+  const ph={
+    viName:{fr:'Honda Civic 2020',en:'Honda Civic 2020',ja:'ホンダ シビック 2020'},
+    viYear:{fr:'Année (ex: 2019)',en:'Year (e.g. 2019)',ja:'年式（例: 2019）'},
+    viEngine:{fr:'Moteur (ex: 1.5T 150ch)',en:'Engine (e.g. 1.5T 150hp)',ja:'エンジン（例: 1.5T 150ps）'},
+    viFuel:{fr:'Carburant',en:'Fuel type',ja:'燃料'},
+    viColor:{fr:'Couleur',en:'Color',ja:'色'},
+    viKm:{fr:'Kilométrage actuel',en:'Current mileage',ja:'現在の走行距離'},
+    viPlate:{fr:'Immatriculation',en:'License plate',ja:'ナンバー'},
+    viPrice:{fr:'Prix d'achat (¥)',en:'Purchase price (¥)',ja:'購入価格（¥）'},
+    viDealer:{fr:'Vendeur / Concession',en:'Dealer',ja:'販売店'},
+    viNotes:{fr:'Notes libres…',en:'Free notes…',ja:'自由メモ…'},
+  };
+  Object.entries(ph).forEach(([id,vals])=>{const el=document.getElementById(id);if(el) el.placeholder=vals[lang]||vals.fr;});
+  goTo('vinfo');
+}
+
+function saveVInfo(){
+  const newName=document.getElementById('viName').value.trim();
+  if(!newName){toast(s('name_taken'));return;}
+  const v=cv();
+  // Rename vehicle if changed
+  if(newName!==v.name){
+    if(db.vehicles.find(x=>x.name===newName&&x!==v)){toast(s('name_taken'));return;}
+    db.exps[newName]=db.exps[v.name]||[];
+    delete db.exps[v.name];
+    v.name=newName;
+    v.isDefault=false; // now custom
+  }
+  v.info={
+    year:document.getElementById('viYear').value.trim(),
+    engine:document.getElementById('viEngine').value.trim(),
+    fuel:document.getElementById('viFuel').value.trim(),
+    color:document.getElementById('viColor').value.trim(),
+    km:document.getElementById('viKm').value.trim(),
+    plate:document.getElementById('viPlate').value.trim(),
+    price:document.getElementById('viPrice').value.trim(),
+    purchaseDate:document.getElementById('viPurchaseDate').value,
+    dealer:document.getElementById('viDealer').value.trim(),
+    notes:document.getElementById('viNotes').value.trim(),
+  };
+  save(); renderAll(); goTo('home');
+  toast(lang==='ja'?'保存しました ✓':(lang==='en'?'Saved ✓':'Enregistré ✓'));
+}
+
 /* SETTINGS */
 .set-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid var(--border);cursor:pointer;font-family:-apple-system,sans-serif;}
 .set-row:last-child{border-bottom:none;}
@@ -286,6 +371,99 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
     </div>
   </div>
   <div class="scroll" id="wishListEl"></div>
+</div>
+
+<!-- VEHICLE INFO -->
+<div class="screen" id="s-vinfo">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-btn" onclick="goTo('home')">‹ <span id="lbl-vinfo-back">Retour</span></button>
+      <div class="hdr-title" id="lbl-vinfo-title">Infos véhicule</div>
+      <button class="hdr-btn bold" onclick="saveVInfo()" id="lbl-vinfo-save">Enregistrer</button>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="form-pad">
+      <!-- Avatar -->
+      <div class="form-sec" style="display:flex;justify-content:center;margin-bottom:8px">
+        <div class="v-avatar" style="width:90px;height:90px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#e8e8ed,#d1d1d6);display:flex;align-items:center;justify-content:center;cursor:pointer;border:2.5px solid var(--border);position:relative" onclick="triggerUpload()" id="vinfoAvatar">
+          <span style="font-size:36px">🚗</span>
+          <div class="v-avatar-overlay"><span>📷</span></div>
+        </div>
+      </div>
+      <!-- Nom -->
+      <div class="form-sec">
+        <label class="form-lbl" id="lbl-vi-name">Nom du véhicule</label>
+        <div class="card">
+          <div class="fi-row" style="border-radius:var(--r)">
+            <span class="fi-ico">🚗</span>
+            <input class="fi" type="text" id="viName" placeholder="Honda Civic 2020">
+          </div>
+        </div>
+      </div>
+      <!-- Infos techniques -->
+      <div class="form-sec">
+        <label class="form-lbl" id="lbl-vi-tech">Infos techniques</label>
+        <div class="card">
+          <div class="fi-row">
+            <span class="fi-ico">📅</span>
+            <input class="fi" type="number" id="viYear" placeholder="Année (ex: 2019)" inputmode="numeric">
+          </div>
+          <div class="fi-row">
+            <span class="fi-ico">⚙️</span>
+            <input class="fi" type="text" id="viEngine" placeholder="Moteur (ex: 1.5T 150ch)">
+          </div>
+          <div class="fi-row">
+            <span class="fi-ico">⛽</span>
+            <input class="fi" type="text" id="viFuel" placeholder="Carburant (ex: Essence, Hybride…)">
+          </div>
+          <div class="fi-row">
+            <span class="fi-ico">🎨</span>
+            <input class="fi" type="text" id="viColor" placeholder="Couleur">
+          </div>
+          <div class="fi-row">
+            <span class="fi-ico">📍</span>
+            <input class="fi" type="number" id="viKm" placeholder="Kilométrage actuel" inputmode="numeric">
+          </div>
+          <div class="fi-row">
+            <span class="fi-ico">🔑</span>
+            <input class="fi" type="text" id="viPlate" placeholder="Immatriculation">
+          </div>
+        </div>
+      </div>
+      <!-- Achat -->
+      <div class="form-sec">
+        <label class="form-lbl" id="lbl-vi-purchase">Achat</label>
+        <div class="card">
+          <div class="fi-row">
+            <span class="fi-ico">💴</span>
+            <input class="fi" type="number" id="viPrice" placeholder="Prix d'achat (¥)" inputmode="numeric">
+          </div>
+          <div class="fi-row">
+            <span class="fi-ico">📆</span>
+            <input class="fi" type="date" id="viPurchaseDate" style="text-align:left">
+          </div>
+          <div class="fi-row">
+            <span class="fi-ico">🏪</span>
+            <input class="fi" type="text" id="viDealer" placeholder="Vendeur / Concession">
+          </div>
+        </div>
+      </div>
+      <!-- Notes -->
+      <div class="form-sec">
+        <label class="form-lbl" id="lbl-vi-notes">Notes</label>
+        <div class="card">
+          <div class="fi-row" style="border-radius:var(--r)">
+            <span class="fi-ico">💬</span>
+            <input class="fi" type="text" id="viNotes" placeholder="Notes libres…">
+          </div>
+        </div>
+      </div>
+      <div class="form-sec">
+        <button class="btn-full" onclick="saveVInfo()" id="lbl-vinfo-save2">Enregistrer</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ADD / EDIT -->
@@ -437,22 +615,6 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
       <div class="card"><div class="fi-row" style="border-radius:var(--r)"><span class="fi-ico">🚗</span><input class="fi" type="text" id="vName" placeholder="Ex : Honda Civic 2020"></div></div>
       <button class="btn-full" onclick="addVehicle()" id="lbl-add-btn">Ajouter</button>
       <button class="btn-full ghost" onclick="closeSheet('vModal')" id="lbl-cancel2">Annuler</button>
-    </div>
-  </div>
-</div>
-
-<!-- SHEET: CROP -->
-<div class="ov" id="cropModal">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" id="lbl-adjust-photo">Ajuster la photo</div>
-    <div class="sheet-body">
-      <div class="crop-container" id="cropContainer">
-        <img id="cropImg" class="crop-img" src="" alt="">
-      </div>
-      <p class="crop-hint" id="lbl-crop-hint">Glissez pour repositionner · Pincez pour zoomer</p>
-      <button class="btn-full" onclick="confirmCrop()" id="lbl-save-crop">Enregistrer</button>
-      <button class="btn-full ghost" onclick="closeSheet('cropModal')" id="lbl-cancel-crop">Annuler</button>
     </div>
   </div>
 </div>
@@ -914,156 +1076,71 @@ function renderVChips(){
     </div>`).join('');
 }
 
-/* HERO */
+/* HERO — round avatar left, info right */
 function renderHero(){
-  const v=cv(),exps=ce(),total=exps.reduce((s,e)=>s+e.amount,0);
+  const v=cv(), exps=ce(), total=exps.reduce((sum,e)=>sum+e.amount,0);
   const el=document.getElementById('vHero');
-  const depStr=lang==='ja'?`${exps.length}件`:`${exps.length} dép.`;
-  const recadrerLbl=lang==='ja'?'調整':(lang==='en'?'Crop':'Recadrer');
-  const photoLbl=lang==='ja'?'写真':(lang==='en'?'Photo':'Photo');
-  const btns=`<div class="v-hero-btns">
-    <button class="v-btn" onclick="triggerUpload()">📷 <span>${photoLbl}</span></button>
-    ${v.photo?`<button class="v-btn" onclick="openCrop()">✂️ <span>${recadrerLbl}</span></button>`:''}
-  </div>`;
-  const info=`<div class="v-hero-info">
-    <div><div class="v-hero-name">${esc(v.name)}</div>
-    <div class="v-hero-sub">${depStr} · ${fmt(total)}</div></div>
-    ${btns}
-  </div>`;
-  if(v.photo){
-    el.innerHTML=`<img class="v-hero-photo" src="${v.photo}">${info}`;
-  } else {
-    const tapLbl=lang==='ja'?'タップして写真を追加':(lang==='en'?'Tap to add a photo':'Appuyer pour ajouter une photo');
-    el.innerHTML=`<div class="v-hero-ph" onclick="triggerUpload()"><span>🚗</span><p>${tapLbl}</p></div>${info}`;
+  const tapLbl=lang==='ja'?'写真':(lang==='en'?'Photo':'Photo');
+  const editLbl=lang==='ja'?'編集':(lang==='en'?'Edit':'Modifier');
+
+  // Avatar
+  const avatarInner = v.photo
+    ? `<img src="${v.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    : `<span class="v-avatar-ph">🚗</span>`;
+
+  // Info chips (year, engine, fuel, km)
+  const chips = [];
+  if(v.info){
+    if(v.info.year) chips.push(`<span class="v-chip">${esc(v.info.year)}</span>`);
+    if(v.info.engine) chips.push(`<span class="v-chip">${esc(v.info.engine)}</span>`);
+    if(v.info.fuel) chips.push(`<span class="v-chip">⛽ ${esc(v.info.fuel)}</span>`);
+    if(v.info.km) chips.push(`<span class="v-chip km">📍 ${parseInt(v.info.km).toLocaleString('ja-JP')} km</span>`);
   }
+
+  const depStr = lang==='ja' ? `${exps.length}件 · ${fmt(total)}` : `${exps.length} dép. · ${fmt(total)}`;
+
+  el.innerHTML = `<div class="v-hero-inner">
+    <div class="v-avatar" onclick="triggerUpload()">
+      ${avatarInner}
+      <div class="v-avatar-overlay"><span>📷</span></div>
+    </div>
+    <div class="v-info">
+      <div class="v-hero-name">${esc(v.name)}</div>
+      <div class="v-hero-sub">${depStr}</div>
+      ${chips.length ? `<div class="v-hero-chips">${chips.join('')}</div>` : ''}
+      <button class="v-edit-btn" onclick="openVInfo()">✏️ ${editLbl}</button>
+    </div>
+  </div>`;
 }
 
-/* PHOTO + CROP */
+/* PHOTO — auto center-square crop to circle */
 function triggerUpload(){document.getElementById('photoInput').click();}
-
-// Crop state — offset is from center of container
-let _rawSrc=null, _cOrigSrc=null;
-let _cX=0, _cY=0, _cS=1;
-let _cDist=0, _cDrag=false, _cTX=0, _cTY=0;
-// Natural image size
-let _imgNW=0, _imgNH=0;
 
 function handlePhotoFile(inp){
   const f=inp.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=e=>{ _rawSrc=e.target.result; inp.value=''; openCropWith(_rawSrc, true); };
-  r.readAsDataURL(f);
-}
-
-function openCrop(){ if(cv().photo) openCropWith(cv()._origSrc||cv().photo, false); }
-
-function openCropWith(src, isNew){
-  _cOrigSrc = src;
-  const img=document.getElementById('cropImg');
-  // reset transform
-  if(isNew){ _cX=0; _cY=0; _cS=1; }
-  else { _cX=cv().cropX||0; _cY=cv().cropY||0; _cS=cv().cropScale||1; }
-  img.style.transform='';
-  img.src='';
-  img.onload=()=>{
-    _imgNW=img.naturalWidth; _imgNH=img.naturalHeight;
-    sizeCropImg();
-    applyCrop();
-    setupCrop();
-    document.getElementById('cropModal').classList.add('show');
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    inp.value='';
+    const img=new Image();
+    img.onload=()=>{
+      // Center-square crop then output 300×300
+      const SIZE=300;
+      const canvas=document.createElement('canvas');
+      canvas.width=SIZE; canvas.height=SIZE;
+      const ctx=canvas.getContext('2d');
+      const side=Math.min(img.naturalWidth, img.naturalHeight);
+      const sx=(img.naturalWidth-side)/2;
+      const sy=(img.naturalHeight-side)/2;
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE);
+      cv().photo=canvas.toDataURL('image/jpeg', 0.90);
+      save(); renderAll(); toast(s('photo_ok'));
+      // also update vinfo avatar if open
+      const va=document.getElementById('vinfoAvatar');
+      if(va) va.innerHTML=`<img src="${cv().photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"><div class="v-avatar-overlay"><span>📷</span></div>`;
+    };
+    img.src=ev.target.result;
   };
-  img.src=src;
-}
-
-function sizeCropImg(){
-  // Make img fill container naturally, then we pan/zoom on top
-  const img=document.getElementById('cropImg');
-  const con=document.getElementById('cropContainer');
-  const cw=con.clientWidth||con.offsetWidth||320;
-  const ch=con.clientHeight||220;
-  // Fit image to container (cover)
-  const scaleToFit=Math.max(cw/_imgNW, ch/_imgNH);
-  const fitW=_imgNW*scaleToFit, fitH=_imgNH*scaleToFit;
-  img.style.width=fitW+'px';
-  img.style.height=fitH+'px';
-  img.style.left=((cw-fitW)/2)+'px';
-  img.style.top=((ch-fitH)/2)+'px';
-}
-
-function applyCrop(){
-  const img=document.getElementById('cropImg');
-  img.style.transform=`translate(${_cX}px,${_cY}px) scale(${_cS})`;
-}
-
-function setupCrop(){
-  const c=document.getElementById('cropContainer');
-  // Remove old listeners by cloning
-  const newC=c.cloneNode(true);
-  c.parentNode.replaceChild(newC,c);
-  // Re-grab new element
-  const con=document.getElementById('cropContainer');
-  con.ontouchstart=e=>{
-    e.preventDefault();
-    if(e.touches.length===1){
-      _cDrag=true; _cTX=e.touches[0].clientX; _cTY=e.touches[0].clientY;
-    } else if(e.touches.length===2){
-      _cDrag=false;
-      _cDist=Math.hypot(
-        e.touches[0].clientX-e.touches[1].clientX,
-        e.touches[0].clientY-e.touches[1].clientY);
-    }
-  };
-  con.ontouchmove=e=>{
-    e.preventDefault();
-    if(e.touches.length===1&&_cDrag){
-      _cX+=e.touches[0].clientX-_cTX; _cY+=e.touches[0].clientY-_cTY;
-      _cTX=e.touches[0].clientX; _cTY=e.touches[0].clientY;
-      applyCrop();
-    } else if(e.touches.length===2){
-      const d=Math.hypot(
-        e.touches[0].clientX-e.touches[1].clientX,
-        e.touches[0].clientY-e.touches[1].clientY);
-      _cS=Math.max(0.5,Math.min(5,_cS*d/_cDist));
-      _cDist=d; applyCrop();
-    }
-  };
-  con.ontouchend=()=>{ _cDrag=false; };
-}
-
-function confirmCrop(){
-  // Render to canvas using current transform
-  const img=document.getElementById('cropImg');
-  const con=document.getElementById('cropContainer');
-  const cw=con.offsetWidth||320, ch=con.offsetHeight||220;
-
-  const canvas=document.createElement('canvas');
-  // Output at 2× for retina
-  const OUT_W=cw*2, OUT_H=ch*2;
-  canvas.width=OUT_W; canvas.height=OUT_H;
-  const ctx=canvas.getContext('2d');
-
-  // The img element: natural size, displayed at fitW×fitH, positioned at (left,top)
-  const dispW=parseFloat(img.style.width)||cw;
-  const dispH=parseFloat(img.style.height)||ch;
-  const imgLeft=parseFloat(img.style.left)||0;
-  const imgTop=parseFloat(img.style.top)||0;
-
-  // transform-origin is top-left of the img element
-  // translate(_cX, _cY) scale(_cS) applied from top-left of img
-  // So final displayed rect: x = imgLeft + _cX, y = imgTop + _cY, w = dispW*_cS, h = dispH*_cS
-  const drawnX=(imgLeft+_cX)*2;
-  const drawnY=(imgTop+_cY)*2;
-  const drawnW=dispW*_cS*2;
-  const drawnH=dispH*_cS*2;
-
-  ctx.drawImage(img, drawnX, drawnY, drawnW, drawnH);
-  const cropped=canvas.toDataURL('image/jpeg',0.88);
-
-  cv().photo=cropped;
-  cv()._origSrc=_cOrigSrc;
-  cv().cropX=_cX; cv().cropY=_cY; cv().cropScale=_cS;
-  _rawSrc=null;
-  save(); renderAll(); closeSheet('cropModal'); toast(s('photo_ok'));
+  reader.readAsDataURL(f);
 }
 
 /* STATS HOME */
@@ -1238,7 +1315,7 @@ function closeSheet(id){document.getElementById(id).classList.remove('show');}
 function closeAlert(id){document.getElementById(id).classList.remove('show');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-['vModal','cropModal'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id);}));
+['vModal'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id);}));
 ['delExpAlert','delVAlert'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeAlert(id);}));
 document.getElementById('vName').addEventListener('keydown',e=>{if(e.key==='Enter')addVehicle();});
 
