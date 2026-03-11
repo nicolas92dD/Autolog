@@ -9,6 +9,26 @@
 <meta name="apple-mobile-web-app-title" content="AutoLog">
 <meta name="theme-color" content="#f2f2f7">
 <title>AutoLog</title>
+<link rel="apple-touch-icon" id="pwaIcon" href="">
+<script>
+// Génère une icône PWA emoji 🚗 sur canvas
+(function(){
+  const s=180,cv=document.createElement('canvas');
+  cv.width=cv.height=s;
+  const ctx=cv.getContext('2d');
+  // Fond rouge
+  ctx.fillStyle='#ff3b30';
+  const r=36;
+  ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(s-r,0);ctx.quadraticCurveTo(s,0,s,r);
+  ctx.lineTo(s,s-r);ctx.quadraticCurveTo(s,s,s-r,s);
+  ctx.lineTo(r,s);ctx.quadraticCurveTo(0,s,0,s-r);
+  ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();ctx.fill();
+  // Emoji 🚗
+  ctx.font=s*.6+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('🚗',s/2,s/2+4);
+  document.getElementById('pwaIcon').href=cv.toDataURL();
+})();
+</script>
 <!-- Firebase SDK -->
 <script type="module" id="fb-init-script">
 // ══════════════════════════════════════════════════════
@@ -841,10 +861,10 @@ function setLang(l){
    SHOPS
 ══════════════════════════════════════ */
 const SHOPS=[
-  {id:'amazon', name:'Amazon', logo:'🛒', domains:['amazon.co.jp','amazon.com','amzn']},
-  {id:'yahoo',  name:'Yahoo!', logo:'🔴', domains:['auctions.yahoo.co.jp','yahoo.co.jp','yjc.to']},
-  {id:'mercari',name:'Mercari',logo:'🟠', domains:['jp.mercari.com','mercari.com']},
-  {id:'rakuten',name:'Rakuten',logo:'🟥', domains:['rakuten.co.jp','raku10.jp']},
+  {id:'amazon', name:'Amazon', logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=amazon.co.jp" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['amazon.co.jp','amazon.com','amzn']},
+  {id:'yahoo',  name:'Yahoo!', logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=yahoo.co.jp" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['auctions.yahoo.co.jp','yahoo.co.jp','yjc.to']},
+  {id:'mercari',name:'Mercari',logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=mercari.com" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['jp.mercari.com','mercari.com']},
+  {id:'rakuten',name:'Rakuten',logo:'<img src="https://www.google.com/s2/favicons?sz=32&domain=rakuten.co.jp" style="width:20px;height:20px;border-radius:4px;vertical-align:middle">', domains:['rakuten.co.jp','raku10.jp']},
   {id:'other',  name:'Autre',  logo:'🌐', domains:[]},
 ];
 let selectedShop=null;
@@ -1259,17 +1279,26 @@ function wishRow(e,isLast){
 }
 
 function toggleBought(id){
-  const e=db.wish.find(x=>x.id===id);if(!e) return;
+  const e=db.wish.find(x=>x.id===id); if(!e) return;
   e.bought=!e.bought;
   if(e.bought){
-    // Add to expenses on current vehicle at today's date
-    const today=new Date().toISOString().split('T')[0];
-    const newExp={id:Date.now(),cat:e.cat||'pieces',amount:e.amount||0,date:today,
-      desc:e.desc||sCat(e.cat||'pieces'),km:'',notes:e.notes||'',link:e.link||'',shop:e.shop||null};
-    const arr=ce();arr.unshift(newExp);setCe(arr);
-    toast(s('saved'));
+    // Ajouter en dépense UNE SEULE FOIS — si déjà ajouté (expId existe), on ne recrée pas
+    if(!e.expId){
+      const today=new Date().toISOString().split('T')[0];
+      const newExp={id:Date.now(),cat:e.cat||'pieces',amount:e.amount||0,date:today,
+        desc:e.desc||sCat(e.cat||'pieces'),km:'',notes:e.notes||'',link:e.link||'',shop:e.shop||null};
+      const arr=ce(); arr.unshift(newExp); setCe(arr);
+      e.expId=newExp.id; // mémorise l'id de la dépense créée
+      toast(s('saved'));
+    }
+  } else {
+    // Si on décoche : supprime la dépense associée et réinitialise expId
+    if(e.expId){
+      setCe(ce().filter(x=>x.id!==e.expId));
+      e.expId=null;
+    }
   }
-  save();renderAll();
+  save(); renderAll();
 }
 
 /* VCHIPS */
