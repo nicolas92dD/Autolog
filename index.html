@@ -116,7 +116,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .form-lbl{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;padding:0 4px 8px;display:block;font-family:-apple-system,sans-serif;}
 .fi{width:100%;background:none;border:none;font-size:16px;color:var(--text);outline:none;font-family:-apple-system,sans-serif;flex:1;min-width:0;text-align:left;}
 .fi::placeholder{color:var(--text3);}
-input[type="date"].fi{-webkit-appearance:none;}
+input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;width:100%;}
 .fi-row{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:.5px solid var(--border);background:var(--card);min-height:48px;}
 .fi-row:first-child{border-radius:var(--r) var(--r) 0 0;}
 .fi-row:last-child{border-bottom:none;border-radius:0 0 var(--r) var(--r);}
@@ -619,6 +619,16 @@ function applyI18n(){
 }
 
 function setLang(l){
+  const oldDef=DEFAULT_V_NAMES[lang];
+  const newDef=DEFAULT_V_NAMES[l];
+  // rename any vehicle still using the old default name
+  db.vehicles.forEach(v=>{
+    if(v.isDefault && v.name===oldDef){
+      db.exps[newDef]=db.exps[v.name]||[];
+      if(newDef!==v.name) delete db.exps[v.name];
+      v.name=newDef;
+    }
+  });
   lang=l; db.lang=l; save();
   ['fr','en','ja'].forEach(x=>document.getElementById('lp-'+x).classList.toggle('active',x===l));
   applyI18n(); renderAll();
@@ -671,10 +681,10 @@ function onLinkInput(url){
    DATA
 ══════════════════════════════════════ */
 const CATS_DEF=[
+  {k:'pieces',   i:'⚙️', c:'c-pieces',  col:'#a855f7'},
   {k:'huile',    i:'🛢️',c:'c-huile',   col:'#f97316'},
   {k:'lavage',   i:'🧼', c:'c-lavage',  col:'#3b82f6'},
   {k:'entretien',i:'🔧', c:'c-entretien',col:'#22c55e'},
-  {k:'pieces',   i:'⚙️', c:'c-pieces',  col:'#a855f7'},
   {k:'carburant',i:'⛽', c:'c-carburant',col:'#eab308'},
   {k:'assurance',i:'🛡️',c:'c-assurance',col:'#10b981'},
   {k:'autre',    i:'📎', c:'c-autre',   col:'#94a3b8'},
@@ -684,7 +694,14 @@ function catDef(k){return CATS_DEF.find(c=>c.k===k)||WISH_CAT;}
 
 let db;
 try{db=JSON.parse(localStorage.getItem('autolog5')||'null');}catch(e){db=null;}
-if(!db) db={vehicles:[{name:'Mon véhicule',photo:null,cropX:0,cropY:0,cropScale:1}],cur:0,exps:{'Mon véhicule':[]},wish:[],lang:'fr'};
+
+// Default vehicle names per lang (used to detect if name was customized)
+const DEFAULT_V_NAMES={fr:'Mon véhicule',en:'My vehicle',ja:'マイカー'};
+
+if(!db){
+  const defName='Mon véhicule';
+  db={vehicles:[{name:defName,photo:null,cropX:0,cropY:0,cropScale:1,isDefault:true}],cur:0,exps:{[defName]:[]},wish:[],lang:'fr'};
+}
 if(!db.wish) db.wish=[];
 if(!db.lang) db.lang='fr';
 lang=db.lang;
@@ -724,29 +741,6 @@ function goTo(tab){
   if(tb) tb.classList.add('active');
   if(tab==='stats') renderStatsScreen();
 }
-
-/* SWIPE BETWEEN TABS (not add screen) */
-(function(){
-  let sx=0,sy=0,going=false,axis=null;
-  document.addEventListener('touchstart',e=>{
-    if(e.target.closest('.swipe-wrap,#s-add,.ov,.alert-ov')) return;
-    const t=e.touches[0];sx=t.clientX;sy=t.clientY;going=true;axis=null;
-  },{passive:true});
-  document.addEventListener('touchmove',e=>{
-    if(!going) return;
-    const t=e.touches[0];const dx=t.clientX-sx,dy=t.clientY-sy;
-    if(!axis&&(Math.abs(dx)>6||Math.abs(dy)>6)) axis=Math.abs(dx)>Math.abs(dy)?'h':'v';
-  },{passive:true});
-  document.addEventListener('touchend',e=>{
-    if(!going||axis!=='h'){going=false;return;}going=false;
-    const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)<52) return;
-    const cur=document.querySelector('.screen.active');
-    if(!cur||cur.id==='s-add') return;
-    const idx=SWIPE_TABS.indexOf(cur.id.replace('s-',''));if(idx===-1) return;
-    if(dx<-52&&idx<SWIPE_TABS.length-1) goTo(SWIPE_TABS[idx+1]);
-    else if(dx>52&&idx>0) goTo(SWIPE_TABS[idx-1]);
-  },{passive:true});
-})();
 
 /* FORM */
 function buildCatRow(){
@@ -866,26 +860,49 @@ function renderWishList(){
 function wishRow(e,isLast){
   const cd=catDef(e.cat);
   const sh=e.shop?shopById(e.shop):null;
-  const linkHtml=e.link?`<a href="${esc(e.link)}" target="_blank" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--blue);text-decoration:none">${sh?.logo||'🔗'} ${sh?.name||'Lien'}</a>`:'';
   const boughtStyle=e.bought?'text-decoration:line-through;color:var(--text3)':'';
+  // Link preview card
+  const linkHtml=e.link?`
+    <div style="margin-top:6px;background:var(--bg);border-radius:8px;overflow:hidden">
+      <div onclick="event.stopPropagation();openExternal(this.dataset.href)" data-href="${e.link}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer">
+        <span style="font-size:18px">${sh?.logo||'🔗'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text);font-family:-apple-system,sans-serif">${sh?.name||'Lien'}</div>
+          <div style="font-size:11px;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:-apple-system,sans-serif">${esc(e.link)}</div>
+        </div>
+        <span style="color:var(--blue);font-size:14px">↗</span>
+      </div>
+    </div>`:'';
   return `<div class="swipe-wrap" data-id="${e.id}" data-wish="1">
     <div class="swipe-del-bg"><span>🗑️</span>${s('delete')}</div>
-    <div class="erow" onclick="openEdit(${e.id},true)" style="${isLast?'border-bottom:none':''}">
-      <div class="eico ${cd.c}">${cd.i}</div>
-      <div class="emid">
-        <div class="ename" style="${boughtStyle}">${esc(e.desc||sCat(e.cat))}</div>
-        <div class="emeta">${e.amount?fmt(e.amount)+' ':''} ${linkHtml} ${e.notes?'· '+esc(e.notes):''}</div>
+    <div style="background:var(--card);position:relative;z-index:1;border-bottom:${isLast?'none':'.5px solid var(--border)'}">
+      <div class="erow" onclick="openEdit(${e.id},true)" style="border-bottom:none">
+        <div class="eico ${cd.c}">${cd.i}</div>
+        <div class="emid">
+          <div class="ename" style="${boughtStyle}">${esc(e.desc||sCat(e.cat))}</div>
+          <div class="emeta">${e.amount?fmt(e.amount):''}${e.notes?` · ${esc(e.notes)}`:''}</div>
+        </div>
+        <div class="eright">
+          <button class="wish-check-btn" onclick="event.stopPropagation();toggleBought(${e.id})">${e.bought?s('unbought'):s('bought')}</button>
+        </div>
       </div>
-      <div class="eright">
-        <button class="wish-check-btn" onclick="event.stopPropagation();toggleBought(${e.id})">${e.bought?s('unbought'):s('bought')}</button>
-      </div>
+      ${e.link&&!e.bought?`<div style="padding:0 12px 10px" onclick="event.stopPropagation()">${linkHtml}</div>`:''}
     </div>
   </div>`;
 }
 
 function toggleBought(id){
   const e=db.wish.find(x=>x.id===id);if(!e) return;
-  e.bought=!e.bought;save();renderWishList();
+  e.bought=!e.bought;
+  if(e.bought){
+    // Add to expenses on current vehicle at today's date
+    const today=new Date().toISOString().split('T')[0];
+    const newExp={id:Date.now(),cat:e.cat||'pieces',amount:e.amount||0,date:today,
+      desc:e.desc||sCat(e.cat||'pieces'),km:'',notes:e.notes||'',link:e.link||'',shop:e.shop||null};
+    const arr=ce();arr.unshift(newExp);setCe(arr);
+    toast(s('saved'));
+  }
+  save();renderAll();
 }
 
 /* VCHIPS */
@@ -914,7 +931,7 @@ function renderHero(){
     ${btns}
   </div>`;
   if(v.photo){
-    el.innerHTML=`<img class="v-hero-photo" src="${v.photo}" style="object-position:${v.cropX||0}px ${v.cropY||0}px">${info}`;
+    el.innerHTML=`<img class="v-hero-photo" src="${v.photo}">${info}`;
   } else {
     const tapLbl=lang==='ja'?'タップして写真を追加':(lang==='en'?'Tap to add a photo':'Appuyer pour ajouter une photo');
     el.innerHTML=`<div class="v-hero-ph" onclick="triggerUpload()"><span>🚗</span><p>${tapLbl}</p></div>${info}`;
@@ -923,46 +940,130 @@ function renderHero(){
 
 /* PHOTO + CROP */
 function triggerUpload(){document.getElementById('photoInput').click();}
-let _rawSrc=null,_cX=0,_cY=0,_cS=1,_cDist=0,_cDrag=false,_cTX=0,_cTY=0;
+
+// Crop state — offset is from center of container
+let _rawSrc=null, _cOrigSrc=null;
+let _cX=0, _cY=0, _cS=1;
+let _cDist=0, _cDrag=false, _cTX=0, _cTY=0;
+// Natural image size
+let _imgNW=0, _imgNH=0;
 
 function handlePhotoFile(inp){
-  const f=inp.files[0];if(!f) return;
+  const f=inp.files[0]; if(!f) return;
   const r=new FileReader();
-  r.onload=e=>{_rawSrc=e.target.result;inp.value='';openCropWith(_rawSrc);};
+  r.onload=e=>{ _rawSrc=e.target.result; inp.value=''; openCropWith(_rawSrc, true); };
   r.readAsDataURL(f);
 }
-function openCrop(){if(cv().photo) openCropWith(cv().photo);}
-function openCropWith(src){
+
+function openCrop(){ if(cv().photo) openCropWith(cv()._origSrc||cv().photo, false); }
+
+function openCropWith(src, isNew){
+  _cOrigSrc = src;
   const img=document.getElementById('cropImg');
-  img.src=src;_cX=cv().cropX||0;_cY=cv().cropY||0;_cS=cv().cropScale||1;
-  img.onload=()=>{applyCrop();setupCrop();document.getElementById('cropModal').classList.add('show');};
+  // reset transform
+  if(isNew){ _cX=0; _cY=0; _cS=1; }
+  else { _cX=cv().cropX||0; _cY=cv().cropY||0; _cS=cv().cropScale||1; }
+  img.style.transform='';
+  img.src='';
+  img.onload=()=>{
+    _imgNW=img.naturalWidth; _imgNH=img.naturalHeight;
+    sizeCropImg();
+    applyCrop();
+    setupCrop();
+    document.getElementById('cropModal').classList.add('show');
+  };
+  img.src=src;
 }
+
+function sizeCropImg(){
+  // Make img fill container naturally, then we pan/zoom on top
+  const img=document.getElementById('cropImg');
+  const con=document.getElementById('cropContainer');
+  const cw=con.clientWidth||con.offsetWidth||320;
+  const ch=con.clientHeight||220;
+  // Fit image to container (cover)
+  const scaleToFit=Math.max(cw/_imgNW, ch/_imgNH);
+  const fitW=_imgNW*scaleToFit, fitH=_imgNH*scaleToFit;
+  img.style.width=fitW+'px';
+  img.style.height=fitH+'px';
+  img.style.left=((cw-fitW)/2)+'px';
+  img.style.top=((ch-fitH)/2)+'px';
+}
+
 function applyCrop(){
-  document.getElementById('cropImg').style.transform=`translate(${_cX}px,${_cY}px) scale(${_cS})`;
+  const img=document.getElementById('cropImg');
+  img.style.transform=`translate(${_cX}px,${_cY}px) scale(${_cS})`;
 }
+
 function setupCrop(){
   const c=document.getElementById('cropContainer');
-  c.ontouchstart=e=>{
+  // Remove old listeners by cloning
+  const newC=c.cloneNode(true);
+  c.parentNode.replaceChild(newC,c);
+  // Re-grab new element
+  const con=document.getElementById('cropContainer');
+  con.ontouchstart=e=>{
     e.preventDefault();
-    if(e.touches.length===1){_cDrag=true;_cTX=e.touches[0].clientX;_cTY=e.touches[0].clientY;}
-    else if(e.touches.length===2){_cDrag=false;_cDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
-  };
-  c.ontouchmove=e=>{
-    e.preventDefault();
-    if(e.touches.length===1&&_cDrag){
-      _cX+=e.touches[0].clientX-_cTX;_cY+=e.touches[0].clientY-_cTY;
-      _cTX=e.touches[0].clientX;_cTY=e.touches[0].clientY;applyCrop();
+    if(e.touches.length===1){
+      _cDrag=true; _cTX=e.touches[0].clientX; _cTY=e.touches[0].clientY;
     } else if(e.touches.length===2){
-      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-      _cS=Math.max(.5,Math.min(4,_cS*d/_cDist));_cDist=d;applyCrop();
+      _cDrag=false;
+      _cDist=Math.hypot(
+        e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY);
     }
   };
-  c.ontouchend=()=>{_cDrag=false;};
+  con.ontouchmove=e=>{
+    e.preventDefault();
+    if(e.touches.length===1&&_cDrag){
+      _cX+=e.touches[0].clientX-_cTX; _cY+=e.touches[0].clientY-_cTY;
+      _cTX=e.touches[0].clientX; _cTY=e.touches[0].clientY;
+      applyCrop();
+    } else if(e.touches.length===2){
+      const d=Math.hypot(
+        e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY);
+      _cS=Math.max(0.5,Math.min(5,_cS*d/_cDist));
+      _cDist=d; applyCrop();
+    }
+  };
+  con.ontouchend=()=>{ _cDrag=false; };
 }
+
 function confirmCrop(){
-  if(_rawSrc) cv().photo=_rawSrc; _rawSrc=null;
-  cv().cropX=_cX;cv().cropY=_cY;cv().cropScale=_cS;
-  save();renderAll();closeSheet('cropModal');toast(s('photo_ok'));
+  // Render to canvas using current transform
+  const img=document.getElementById('cropImg');
+  const con=document.getElementById('cropContainer');
+  const cw=con.offsetWidth||320, ch=con.offsetHeight||220;
+
+  const canvas=document.createElement('canvas');
+  // Output at 2× for retina
+  const OUT_W=cw*2, OUT_H=ch*2;
+  canvas.width=OUT_W; canvas.height=OUT_H;
+  const ctx=canvas.getContext('2d');
+
+  // The img element: natural size, displayed at fitW×fitH, positioned at (left,top)
+  const dispW=parseFloat(img.style.width)||cw;
+  const dispH=parseFloat(img.style.height)||ch;
+  const imgLeft=parseFloat(img.style.left)||0;
+  const imgTop=parseFloat(img.style.top)||0;
+
+  // transform-origin is top-left of the img element
+  // translate(_cX, _cY) scale(_cS) applied from top-left of img
+  // So final displayed rect: x = imgLeft + _cX, y = imgTop + _cY, w = dispW*_cS, h = dispH*_cS
+  const drawnX=(imgLeft+_cX)*2;
+  const drawnY=(imgTop+_cY)*2;
+  const drawnW=dispW*_cS*2;
+  const drawnH=dispH*_cS*2;
+
+  ctx.drawImage(img, drawnX, drawnY, drawnW, drawnH);
+  const cropped=canvas.toDataURL('image/jpeg',0.88);
+
+  cv().photo=cropped;
+  cv()._origSrc=_cOrigSrc;
+  cv().cropX=_cX; cv().cropY=_cY; cv().cropScale=_cS;
+  _rawSrc=null;
+  save(); renderAll(); closeSheet('cropModal'); toast(s('photo_ok'));
 }
 
 /* STATS HOME */
@@ -1024,7 +1125,10 @@ function renderList(){
             <div class="ename ${dim}">${esc(nm)}</div>
             <div class="emeta">${ds}${e.km?` · ${parseInt(e.km).toLocaleString('ja-JP')} km`:''}${badge?` `+badge:''}${e.notes?` · ${esc(e.notes)}`:''}</div>
           </div>
-          <div class="eright"><div class="eamt">${fmt(e.amount)}</div></div>
+          <div class="eright">
+            <div class="eamt">${fmt(e.amount)}</div>
+            ${e.link?`<button data-href="${e.link}" onclick="event.stopPropagation();openExternal(this.dataset.href)" style="background:none;border:none;color:var(--blue);font-size:14px;cursor:pointer;padding:0">↗</button>`:''}
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -1085,7 +1189,7 @@ function showAddVehicle(){document.getElementById('vModal').classList.add('show'
 function addVehicle(){
   const name=document.getElementById('vName').value.trim();if(!name) return;
   if(db.vehicles.find(v=>v.name===name)){toast(s('name_taken'));return;}
-  db.vehicles.push({name,photo:null,cropX:0,cropY:0,cropScale:1});db.exps[name]=[];
+  db.vehicles.push({name,photo:null,cropX:0,cropY:0,cropScale:1,isDefault:false});db.exps[name]=[];
   db.cur=db.vehicles.length-1;save();renderAll();closeSheet('vModal');
   document.getElementById('vName').value='';toast(s('v_added'));
 }
@@ -1115,6 +1219,15 @@ function renderSettings(){
       ${i===db.cur?`<span style="color:var(--blue);font-size:12px;font-weight:500">${s('active')}</span>`:''}
       ${db.vehicles.length>1?`<button style="background:none;border:none;font-size:18px;cursor:pointer;padding:0 0 0 6px" onclick="event.stopPropagation();askDelVehicle(${i})">🗑️</button>`:''}
     </div>`).join('');
+}
+
+/* OPEN EXTERNAL LINK — opens in Safari (native browser) even when in PWA mode */
+function openExternal(url){
+  if(!url) return;
+  // On iOS PWA, window.open with _blank opens Safari
+  const a=document.createElement('a');
+  a.href=url; a.target='_blank'; a.rel='noreferrer noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
 /* HELPERS */
