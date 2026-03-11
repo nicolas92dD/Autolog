@@ -8,6 +8,46 @@
 <meta name="apple-mobile-web-app-title" content="AutoLog">
 <meta name="theme-color" content="#f2f2f7">
 <title>AutoLog</title>
+<!-- Firebase SDK -->
+<script type="module" id="fb-init-script">
+// ══════════════════════════════════════════════════════
+//  🔧 REMPLACE ICI ton firebaseConfig après avoir créé
+//     ton projet sur console.firebase.google.com
+// ══════════════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider,
+         createUserWithEmailAndPassword, signInWithEmailAndPassword,
+         signOut, updateProfile }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, enableIndexedDbPersistence }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyAMDMEqLCXWfyOGeBmtseQRDGRDR1-Hmqw",
+  authDomain:        "autolog-64a5a.firebaseapp.com",
+  projectId:         "autolog-64a5a",
+  storageBucket:     "autolog-64a5a.firebasestorage.app",
+  messagingSenderId: "519401018430",
+  appId:             "1:519401018430:web:350621240e48b39c616d6f"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const fsdb = getFirestore(app);
+
+// Offline persistence (fonctionne même sans internet)
+try { enableIndexedDbPersistence(fsdb); } catch(e) {}
+
+// Expose to global scope for main script
+window._fbAuth = auth;
+window._fbDb   = fsdb;
+window._fbFns  = { signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword,
+                   signInWithEmailAndPassword, signOut, onAuthStateChanged,
+                   doc, setDoc, getDoc, onSnapshot, updateProfile };
+
+// Signal that Firebase is ready
+window.dispatchEvent(new Event('fb-ready'));
+</script>
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 :root {
@@ -225,11 +265,85 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
 .swipe-wrap.confirm-delete .erow{transform:translateX(-100%) !important;transition:transform .28s cubic-bezier(.4,0,.2,1) !important;}
 @keyframes rowFadeOut{from{max-height:80px;opacity:1}to{max-height:0;opacity:0}}
 .swipe-wrap.removing{animation:rowFadeOut .28s ease forwards;overflow:hidden;}
+/* LOGIN SCREEN */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;gap:0;}
+.login-logo{font-size:52px;margin-bottom:4px;}
+.login-title{font-size:28px;font-weight:800;letter-spacing:-.8px;margin-bottom:4px;}
+.login-title .red{color:var(--red);}
+.login-sub{font-size:14px;color:var(--text2);margin-bottom:36px;text-align:center;line-height:1.4;}
+.login-card{width:100%;max-width:360px;background:var(--card);border-radius:16px;overflow:hidden;margin-bottom:14px;}
+.login-fi-row{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:.5px solid var(--border);}
+.login-fi-row:last-child{border-bottom:none;}
+.login-fi{flex:1;background:none;border:none;outline:none;font-size:16px;color:var(--text);font-family:-apple-system,sans-serif;}
+.login-fi::placeholder{color:var(--text3);}
+.login-btn{width:100%;max-width:360px;border:none;border-radius:12px;padding:15px;font-size:16px;font-weight:600;cursor:pointer;font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;}
+.login-btn.primary{background:var(--blue);color:white;}
+.login-btn.google{background:white;color:#3c4043;border:1.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.login-btn.ghost{background:none;color:var(--blue);font-size:14px;padding:10px;margin-bottom:0;}
+.login-sep{display:flex;align-items:center;gap:10px;width:100%;max-width:360px;margin:4px 0 14px;color:var(--text3);font-size:12px;}
+.login-sep::before,.login-sep::after{content:'';flex:1;height:.5px;background:var(--border);}
+.login-err{color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-bottom:6px;}
+.login-mode-toggle{font-size:13px;color:var(--text2);text-align:center;margin-top:8px;}
+.login-mode-toggle button{background:none;border:none;color:var(--blue);font-size:13px;font-weight:500;cursor:pointer;font-family:-apple-system,sans-serif;}
+/* SYNC badge */
+.sync-badge{position:fixed;top:calc(var(--safe-t) + 54px);right:16px;background:var(--card);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--text2);z-index:50;display:flex;align-items:center;gap:5px;box-shadow:0 1px 6px rgba(0,0,0,.1);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+.sync-dot.off{background:var(--orange);}
 /* WISH */
 .wish-check-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--text2);}
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-logo">🚗</div>
+  <div class="login-title">Auto<span class="red">Log</span></div>
+  <div class="login-sub" id="loginSub">Connecte-toi pour synchroniser
+tes données sur tous tes appareils</div>
+
+  <!-- Email/password fields -->
+  <div class="login-card" id="loginEmailCard">
+    <div class="login-fi-row">
+      <span style="font-size:18px;width:24px;text-align:center">👤</span>
+      <input class="login-fi" type="text" id="loginName" placeholder="Prénom (inscription)" autocomplete="name">
+    </div>
+    <div class="login-fi-row" id="loginNameRow" style="display:none">
+    </div>
+    <div class="login-fi-row">
+      <span style="font-size:18px;width:24px;text-align:center">✉️</span>
+      <input class="login-fi" type="email" id="loginEmail" placeholder="Email" autocomplete="email" inputmode="email">
+    </div>
+    <div class="login-fi-row">
+      <span style="font-size:18px;width:24px;text-align:center">🔒</span>
+      <input class="login-fi" type="password" id="loginPass" placeholder="Mot de passe" autocomplete="current-password">
+    </div>
+  </div>
+
+  <div class="login-err" id="loginErr"></div>
+
+  <button class="login-btn primary" onclick="loginEmail()" id="loginEmailBtn">Se connecter</button>
+
+  <div class="login-sep">ou</div>
+
+  <button class="login-btn google" onclick="loginGoogle()">
+    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Continuer avec Google
+  </button>
+
+  <div class="login-mode-toggle">
+    <span id="loginModeText">Pas encore de compte ?</span>
+    <button onclick="toggleLoginMode()" id="loginModeBtn">Créer un compte</button>
+  </div>
+
+  <button class="login-btn ghost" onclick="skipLogin()" style="margin-top:16px">Continuer sans compte</button>
+</div>
+
+<!-- SYNC BADGE -->
+<div class="sync-badge" id="syncBadge" style="display:none">
+  <div class="sync-dot" id="syncDot"></div>
+  <span id="syncLabel">Sync</span>
+</div>
 
 <!-- HOME -->
 <div class="screen active" id="s-home">
@@ -472,7 +586,12 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
 
 <!-- RÉGLAGES -->
 <div class="screen" id="s-settings">
-  <div class="hdr"><div class="hdr-row"><div class="hdr-title" id="lbl-settings-title">Réglages</div></div></div>
+  <div class="hdr"><div class="hdr-row">
+    <div class="hdr-title" id="lbl-settings-title">Réglages</div>
+    <button class="hdr-btn" onclick="showAccountSheet()" id="accountBtn" style="display:flex;align-items:center;gap:6px;font-size:14px">
+      <div id="accountAvatar" style="width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:14px;color:white;overflow:hidden;flex-shrink:0">👤</div>
+    </button>
+  </div></div>
   <div class="scroll" style="padding-top:16px">
     <div class="sec">
       <div class="sec-lbl" id="lbl-language">Langue</div>
@@ -775,28 +894,99 @@ const CATS_DEF=[
 const WISH_CAT={k:'wishlist',i:'🛒',c:'c-wishlist',col:'#ff9500'};
 function catDef(k){return CATS_DEF.find(c=>c.k===k)||WISH_CAT;}
 
-let db;
-try{db=JSON.parse(localStorage.getItem('autolog5')||'null');}catch(e){db=null;}
-
-// Default vehicle names per lang (used to detect if name was customized)
+// ── DB ──────────────────────────────────────────────────────────────────────
 const DEFAULT_V_NAMES={fr:'Mon véhicule',en:'My vehicle',ja:'マイカー'};
+let db, _currentUser=null, _unsubFirestore=null, _fbReady=false, _loginMode='signin';
 
-if(!db){
+function dbDefault(){
   const defName='Mon véhicule';
-  db={vehicles:[{name:defName,photo:null,cropX:0,cropY:0,cropScale:1,isDefault:true}],cur:0,exps:{[defName]:[]},wish:[],lang:'fr'};
+  return {vehicles:[{name:defName,photo:null,isDefault:true}],cur:0,exps:{[defName]:[]},wish:[],lang:'fr'};
 }
-if(!db.wish) db.wish=[];
-if(!db.lang) db.lang='fr';
+function dbMigrate(d){
+  if(!d) d=dbDefault();
+  if(!d.wish) d.wish=[];
+  if(!d.lang) d.lang='fr';
+  d.vehicles.forEach(v=>{if(!d.exps[v.name])d.exps[v.name]=[];});
+  return d;
+}
+
+// Load from localStorage first (instant start, works offline)
+try{db=dbMigrate(JSON.parse(localStorage.getItem('autolog5')||'null'));}catch(e){db=dbDefault();}
 lang=db.lang;
-db.vehicles.forEach(v=>{
-  if(!db.exps[v.name]) db.exps[v.name]=[];
-  if(v.cropX===undefined){v.cropX=0;v.cropY=0;v.cropScale=1;}
-});
 
 let cat='huile',filt='all',q='',isWishMode=false;
 let delExpId=null,delVIdx=null,editingId=null;
 
-function save(){try{localStorage.setItem('autolog5',JSON.stringify(db));}catch(e){}}
+// ── SAVE ────────────────────────────────────────────────────────────────────
+let _saveTimer=null;
+function save(){
+  try{localStorage.setItem('autolog5',JSON.stringify(db));}catch(e){}
+  if(_currentUser && _fbReady){
+    clearTimeout(_saveTimer);
+    _saveTimer=setTimeout(()=>cloudSave(),1200); // debounce 1.2s
+  }
+}
+
+async function cloudSave(){
+  if(!_currentUser||!_fbReady) return;
+  try{
+    const {doc,setDoc}=window._fbFns;
+    // Photos are large — store separately to stay under 1MB Firestore limit
+    const dbNoPhotos=JSON.parse(JSON.stringify(db));
+    const photos={};
+    dbNoPhotos.vehicles.forEach((v,i)=>{
+      if(v.photo){photos['v'+i]=v.photo;v.photo='__ref:v'+i;}
+    });
+    const {doc:d2,setDoc:s2}=window._fbFns;
+    await setDoc(doc(window._fbDb,'users',_currentUser.uid,'data','main'),{payload:JSON.stringify(dbNoPhotos),updatedAt:Date.now()});
+    // Save photos in separate doc (only if changed)
+    if(Object.keys(photos).length>0){
+      await setDoc(doc(window._fbDb,'users',_currentUser.uid,'data','photos'),{payload:JSON.stringify(photos),updatedAt:Date.now()});
+    }
+    setSyncStatus('ok');
+  }catch(e){setSyncStatus('err');console.warn('cloudSave error',e);}
+}
+
+async function cloudLoad(uid){
+  if(!_fbReady) return;
+  try{
+    const {doc,getDoc}=window._fbFns;
+    const snap=await getDoc(doc(window._fbDb,'users',uid,'data','main'));
+    if(!snap.exists()) return; // first time — keep local data, it will be uploaded
+    const remote=JSON.parse(snap.data().payload);
+    // Restore photos
+    const snapPh=await getDoc(doc(window._fbDb,'users',uid,'data','photos'));
+    const photos=snapPh.exists()?JSON.parse(snapPh.data().payload):{};
+    remote.vehicles.forEach((v,i)=>{
+      if(v.photo&&v.photo.startsWith('__ref:'))v.photo=photos[v.photo.slice(6)]||null;
+    });
+    db=dbMigrate(remote);
+    lang=db.lang;
+    localStorage.setItem('autolog5',JSON.stringify(db));
+    ['fr','en','ja'].forEach(x=>document.getElementById('lp-'+x).classList.toggle('active',x===lang));
+    applyI18n(); renderAll();
+    setSyncStatus('ok');
+  }catch(e){setSyncStatus('err');console.warn('cloudLoad error',e);}
+}
+
+// ── SYNC STATUS ─────────────────────────────────────────────────────────────
+function setSyncStatus(status){
+  const badge=document.getElementById('syncBadge');
+  const dot=document.getElementById('syncDot');
+  const lbl=document.getElementById('syncLabel');
+  if(!badge) return;
+  if(status==='ok'){badge.style.display='flex';dot.className='sync-dot';lbl.textContent='Sync ✓';}
+  else if(status==='err'){badge.style.display='flex';dot.className='sync-dot off';lbl.textContent='Sync ✗';}
+  else{badge.style.display='none';}
+  // Also update account sheet
+  const dot2=document.getElementById('syncStatusDot');
+  const t2=document.getElementById('syncStatusTitle');
+  const s2=document.getElementById('syncStatusSub');
+  if(!dot2) return;
+  if(status==='ok'){dot2.style.background='var(--green)';t2.textContent='Synchronisé';s2.textContent='Données sauvegardées en ligne';}
+  else if(status==='err'){dot2.style.background='var(--orange)';t2.textContent='Erreur de sync';s2.textContent='Vérifiez votre connexion';}
+  else{dot2.style.background='var(--text3)';t2.textContent='Non connecté';s2.textContent='Données locales uniquement';}
+}
 function cv(){return db.vehicles[db.cur];}
 function ce(){return db.exps[cv().name]||[];}
 function setCe(a){db.exps[cv().name]=a;}
@@ -808,6 +998,70 @@ document.getElementById('dDate').valueAsDate=new Date();
 ['fr','en','ja'].forEach(x=>document.getElementById('lp-'+x).classList.toggle('active',x===lang));
 applyI18n();
 renderAll();
+
+// ── FIREBASE AUTH LISTENER ──────────────────────────────────────────────────
+function onFbReady(){
+  _fbReady=true;
+  const {onAuthStateChanged}=window._fbFns;
+  onAuthStateChanged(window._fbAuth, async user=>{
+    _currentUser=user;
+    if(user){
+      // Logged in
+      updateAccountUI(user);
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('syncBadge').style.display='flex';
+      await cloudLoad(user.uid);
+      setSyncStatus('ok');
+    } else {
+      // Not logged in — show login screen if not already dismissed
+      updateAccountUI(null);
+      setSyncStatus('none');
+      if(!localStorage.getItem('autolog_skip_login')){
+        document.getElementById('loginScreen').style.display='flex';
+      }
+    }
+  });
+}
+
+if(window._fbAuth){
+  onFbReady();
+} else {
+  window.addEventListener('fb-ready',onFbReady,{once:true});
+  // Timeout fallback — if Firebase fails to load (bad config), just hide login
+  setTimeout(()=>{
+    if(!_fbReady){
+      console.warn('Firebase did not load — running offline only');
+      _fbReady=false;
+      document.getElementById('loginScreen').style.display='none';
+    }
+  },5000);
+}
+
+function updateAccountUI(user){
+  const av=document.getElementById('accountAvatar');
+  const shAv=document.getElementById('sheetAvatar');
+  const shName=document.getElementById('sheetUserName');
+  const shEmail=document.getElementById('sheetUserEmail');
+  const logoutBtn=document.getElementById('logoutBtn');
+  if(!av) return;
+  if(user){
+    const initials=(user.displayName||user.email||'?').charAt(0).toUpperCase();
+    if(user.photoURL){
+      av.innerHTML=`<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
+      shAv.innerHTML=`<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
+    } else {
+      av.textContent=initials; shAv.textContent=initials;
+    }
+    if(shName) shName.textContent=user.displayName||user.email||'Utilisateur';
+    if(shEmail) shEmail.textContent=user.email||'';
+    if(logoutBtn) logoutBtn.style.display='block';
+  } else {
+    av.innerHTML='👤'; shAv.innerHTML='👤';
+    if(shName) shName.textContent='Invité';
+    if(shEmail) shEmail.textContent='';
+    if(logoutBtn) logoutBtn.style.display='none';
+  }
+}
 
 function renderAll(){
   renderVChips();renderHero();renderStats();renderChart();renderList();renderWishList();renderSettings();
@@ -1304,6 +1558,92 @@ function openExternal(url){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
+/* AUTH FUNCTIONS */
+// _loginMode declared above in DB init
+
+function toggleLoginMode(){
+  _loginMode=_loginMode==='signin'?'signup':'signin';
+  const nameRow=document.getElementById('loginEmailCard').querySelector('#loginName').closest('.login-fi-row');
+  document.getElementById('loginEmailBtn').textContent=_loginMode==='signup'?'Créer un compte':'Se connecter';
+  document.getElementById('loginModeText').textContent=_loginMode==='signup'?'Déjà un compte ?':'Pas encore de compte ?';
+  document.getElementById('loginModeBtn').textContent=_loginMode==='signup'?'Se connecter':'Créer un compte';
+  nameRow.style.display=_loginMode==='signup'?'flex':'none';
+  document.getElementById('loginErr').textContent='';
+  // Update name field label
+  document.getElementById('loginName').placeholder=_loginMode==='signup'?'Prénom':'Prénom (inscription)';
+}
+
+async function loginEmail(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const name=document.getElementById('loginName').value.trim();
+  const errEl=document.getElementById('loginErr');
+  errEl.textContent='';
+  if(!email||!pass){errEl.textContent='Email et mot de passe requis';return;}
+  if(_loginMode==='signup'&&pass.length<6){errEl.textContent='Mot de passe : 6 caractères minimum';return;}
+  try{
+    const {createUserWithEmailAndPassword,signInWithEmailAndPassword,updateProfile}=window._fbFns;
+    if(_loginMode==='signup'){
+      const cred=await createUserWithEmailAndPassword(window._fbAuth,email,pass);
+      if(name) await updateProfile(cred.user,{displayName:name});
+    } else {
+      await signInWithEmailAndPassword(window._fbAuth,email,pass);
+    }
+    localStorage.removeItem('autolog_skip_login');
+    document.getElementById('loginScreen').style.display='none';
+  }catch(e){
+    const msgs={
+      'auth/email-already-in-use':'Email déjà utilisé',
+      'auth/user-not-found':'Aucun compte avec cet email',
+      'auth/wrong-password':'Mot de passe incorrect',
+      'auth/invalid-email':'Email invalide',
+      'auth/invalid-credential':'Email ou mot de passe incorrect',
+      'auth/network-request-failed':'Erreur réseau — vérifiez votre connexion',
+      'auth/configuration-not-found':'Firebase non configuré — voir instructions',
+    };
+    errEl.textContent=msgs[e.code]||('Erreur : '+e.message);
+  }
+}
+
+async function loginGoogle(){
+  const errEl=document.getElementById('loginErr');
+  errEl.textContent='';
+  if(!_fbReady){errEl.textContent='Firebase non configuré — copiez votre firebaseConfig';return;}
+  try{
+    const {signInWithPopup,GoogleAuthProvider}=window._fbFns;
+    const provider=new GoogleAuthProvider();
+    await signInWithPopup(window._fbAuth,provider);
+    localStorage.removeItem('autolog_skip_login');
+  }catch(e){
+    if(e.code==='auth/popup-closed-by-user') return;
+    const msgs={
+      'auth/configuration-not-found':'Firebase non configuré — voir instructions',
+      'auth/network-request-failed':'Erreur réseau',
+    };
+    errEl.textContent=msgs[e.code]||('Erreur Google : '+e.message);
+  }
+}
+
+function skipLogin(){
+  localStorage.setItem('autolog_skip_login','1');
+  document.getElementById('loginScreen').style.display='none';
+}
+
+async function doLogout(){
+  const {signOut}=window._fbFns;
+  await signOut(window._fbAuth);
+  _currentUser=null;
+  setSyncStatus('none');
+  localStorage.removeItem('autolog_skip_login');
+  closeSheet('accountSheet');
+  document.getElementById('loginScreen').style.display='flex';
+}
+
+function showAccountSheet(){
+  updateAccountUI(_currentUser);
+  document.getElementById('accountSheet').classList.add('show');
+}
+
 /* HELPERS */
 function selCat(btn){document.querySelectorAll('.cp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');cat=btn.dataset.cat;}
 function setF(btn){document.querySelectorAll('.fp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filt=btn.dataset.f;renderList();}
@@ -1312,9 +1652,11 @@ function closeSheet(id){document.getElementById(id).classList.remove('show');}
 function closeAlert(id){document.getElementById(id).classList.remove('show');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-['vModal'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id);}));
+['vModal','accountSheet'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id);}));
 ['delExpAlert','delVAlert'].forEach(id=>document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeAlert(id);}));
 document.getElementById('vName').addEventListener('keydown',e=>{if(e.key==='Enter')addVehicle();});
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')loginEmail();});
+document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')loginEmail();});
 
 /* SWIPE TO DELETE */
 function attachSwipeListeners(){
@@ -1350,5 +1692,30 @@ function attachSwipeListeners(){
   });
 }
 </script>
+<!-- SHEET: ACCOUNT -->
+<div class="ov" id="accountSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;gap:14px;padding:16px 20px 14px;border-bottom:.5px solid var(--border)">
+      <div id="sheetAvatar" style="width:48px;height:48px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;color:white;overflow:hidden;flex-shrink:0">👤</div>
+      <div>
+        <div id="sheetUserName" style="font-size:16px;font-weight:700;font-family:-apple-system,sans-serif">Invité</div>
+        <div id="sheetUserEmail" style="font-size:13px;color:var(--text2);font-family:-apple-system,sans-serif"></div>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div id="syncStatusCard" class="card" style="padding:12px 16px;display:flex;align-items:center;gap:10px">
+        <div id="syncStatusDot" style="width:10px;height:10px;border-radius:50%;background:var(--text3);flex-shrink:0"></div>
+        <div>
+          <div id="syncStatusTitle" style="font-size:14px;font-weight:600;font-family:-apple-system,sans-serif">Non connecté</div>
+          <div id="syncStatusSub" style="font-size:12px;color:var(--text2);font-family:-apple-system,sans-serif">Données locales uniquement</div>
+        </div>
+      </div>
+      <button class="btn-full red" id="logoutBtn" onclick="doLogout()" style="display:none">Se déconnecter</button>
+      <button class="btn-full ghost" onclick="closeSheet('accountSheet')">Fermer</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
