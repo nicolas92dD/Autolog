@@ -195,7 +195,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .form-lbl{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;padding:0 4px 8px;display:block;font-family:-apple-system,sans-serif;}
 .fi{width:100%;background:none;border:none;font-size:16px;color:var(--text);outline:none;font-family:-apple-system,sans-serif;flex:1;min-width:0;text-align:left;}
 .fi::placeholder{color:var(--text3);}
-input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;width:100%;}
+input[type="date"].fi{-webkit-appearance:none;appearance:none;text-align:left;-webkit-text-align:left;display:block;width:100%;text-align-last:left;}
+input[type="date"]::-webkit-date-and-time-value{text-align:left;}
 .fi-row{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:.5px solid var(--border);background:var(--card);min-height:48px;}
 .fi-row:first-child{border-radius:var(--r) var(--r) 0 0;}
 .fi-row:last-child{border-bottom:none;border-radius:0 0 var(--r) var(--r);}
@@ -450,7 +451,7 @@ tes données sur tous tes appareils</div>
 <!-- DÉPENSES -->
 <div class="screen" id="s-list">
   <div class="hdr">
-    <div class="hdr-row"><div style="font-size:17px;font-weight:600;letter-spacing:-.3px" id="lbl-expenses-title">Dépenses</div></div>
+    <div class="hdr-row"><div class="hdr-title" id="lbl-expenses-title">Dépenses</div></div>
     <div class="search-wrap">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--text2)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input type="text" id="searchInput" placeholder="Rechercher…" oninput="setQ(this.value)">
@@ -464,7 +465,7 @@ tes données sur tous tes appareils</div>
 <div class="screen" id="s-wish">
   <div class="hdr">
     <div class="hdr-row">
-      <div style="font-size:17px;font-weight:600;letter-spacing:-.3px"><span id="lbl-wishlist-title">Courses</span></div>
+      <div class="hdr-title"><span id="lbl-wishlist-title">Courses</span></div>
     </div>
   </div>
   <div class="scroll" id="wishListEl"></div>
@@ -678,7 +679,7 @@ tes données sur tous tes appareils</div>
 <div class="screen" id="s-maint">
   <div class="hdr">
     <div class="hdr-row">
-      <div style="font-size:17px;font-weight:600;letter-spacing:-.3px"><span id="lbl-maint-title">Entretien</span></div>
+      <div class="hdr-title"><span id="lbl-maint-title">Entretien</span></div>
     </div>
   </div>
   <div class="scroll" id="maintListEl"></div>
@@ -2038,13 +2039,14 @@ function formatDate(dateStr){
 
 let _maintEditId=null;
 function setMaintPreset(days){
-  const base = document.getElementById('maintDate').value
-    ? new Date(document.getElementById('maintDate').value)
-    : new Date();
-  const d = new Date(base);
-  d.setDate(d.getDate() + days);
-  document.getElementById('maintNextDate').value = d.toISOString().split('T')[0];
-  // Flash highlight
+  const val=document.getElementById('maintDate').value;
+  let base;
+  if(val){const[y,m,d]=val.split('-').map(Number);base=new Date(y,m-1,d);}
+  else base=new Date();
+  const d=new Date(base);
+  d.setDate(d.getDate()+days);
+  const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('maintNextDate').value=iso;
   const el=document.getElementById('maintNextDate');
   el.style.color='var(--blue)';
   setTimeout(()=>el.style.color='',600);
