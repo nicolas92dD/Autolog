@@ -11,33 +11,26 @@
 <title>AutoLog</title>
 <link rel="apple-touch-icon" id="pwaIcon" href="">
 <script>
-// Génère une icône PWA 🚗 rouge sur fond blanc
 (function(){
   const s=180,cv=document.createElement('canvas');
   cv.width=cv.height=s;
   const ctx=cv.getContext('2d');
-  // Fond blanc
+  // Fond blanc arrondi
   const r=36;
   ctx.fillStyle='#ffffff';
   ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(s-r,0);ctx.quadraticCurveTo(s,0,s,r);
   ctx.lineTo(s,s-r);ctx.quadraticCurveTo(s,s,s-r,s);
   ctx.lineTo(r,s);ctx.quadraticCurveTo(0,s,0,s-r);
   ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();ctx.fill();
-  // Voiture SVG path en rouge
-  const carSize=s*0.58, x=(s-carSize)/2, y=(s-carSize)/2+2;
-  const sc=carSize/24;
-  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  // Emoji 🚗 en rouge via filtre
+  ctx.font=s*.58+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillStyle='#ff3b30';
-  // Corps principal
-  ctx.beginPath();ctx.moveTo(3,11);ctx.bezierCurveTo(3,10,3.5,9,4.5,8.5);ctx.lineTo(7,5);ctx.bezierCurveTo(8,3.5,9.5,3,11,3);ctx.lineTo(13,3);ctx.bezierCurveTo(14.5,3,16,3.5,17,5);ctx.lineTo(19.5,8.5);ctx.bezierCurveTo(20.5,9,21,10,21,11);ctx.lineTo(21,16);ctx.bezierCurveTo(21,17.1,20.1,18,19,18);ctx.lineTo(18,18);ctx.bezierCurveTo(18,19.7,16.7,21,15,21);ctx.bezierCurveTo(13.3,21,12,19.7,12,18);ctx.lineTo(12,18);ctx.lineTo(9,18);ctx.bezierCurveTo(9,19.7,7.7,21,6,21);ctx.bezierCurveTo(4.3,21,3,19.7,3,18);ctx.lineTo(3,11);ctx.closePath();ctx.fill();
-  // Vitres en blanc
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  ctx.beginPath();ctx.moveTo(8.5,6);ctx.lineTo(7,9);ctx.lineTo(11,9);ctx.lineTo(11,5.5);ctx.bezierCurveTo(10,5.2,9.1,5.4,8.5,6);ctx.closePath();ctx.fill();
-  ctx.beginPath();ctx.moveTo(13,5.5);ctx.lineTo(13,9);ctx.lineTo(17,9);ctx.lineTo(15.5,6);ctx.bezierCurveTo(14.9,5.4,14,5.2,13,5.5);ctx.closePath();ctx.fill();
-  // Roues en blanc
-  ctx.fillStyle='white';
-  ctx.beginPath();ctx.arc(6,18,1.5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(15,18,1.5,0,Math.PI*2);ctx.fill();
+  // On dessine l'emoji puis on applique une teinte rouge via composite
+  ctx.save();
+  ctx.fillText('🚗',s/2,s/2+4);
+  ctx.globalCompositeOperation='source-atop';
+  ctx.fillStyle='#ff3b30';
+  ctx.fillRect(0,0,s,s);
   ctx.restore();
   document.getElementById('pwaIcon').href=cv.toDataURL();
 })();
@@ -103,29 +96,28 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .hdr{flex-shrink:0;padding-top:var(--safe-t);background:rgba(242,242,247,.88);
   backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
   border-bottom:.5px solid var(--border);position:sticky;top:0;z-index:20;}
-.hdr-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px 9px;}
-.hdr-title{font-size:17px;font-weight:700;letter-spacing:-.4px;}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;}
+.hdr-title{font-size:26px;font-weight:800;letter-spacing:-.5px;flex:1;}
 .hdr-title .red{color:var(--red);}
 .hdr-btn{background:none;border:none;color:var(--blue);font-size:17px;font-weight:500;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px 2px;}
 .hdr-btn.bold{font-weight:700;}
 .hdr-circ{width:30px;height:30px;background:var(--blue);border-radius:50%;border:none;color:white;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 /* TABBAR — floating dark pill (Revolut style) */
 .tabbar{
-  position:fixed;bottom:0;left:8px;right:8px;z-index:100;
-  height:calc(62px + var(--safe-b));
-  display:flex;align-items:flex-start;justify-content:space-around;
-  padding-top:8px;
-  padding-bottom:var(--safe-b);
+  position:fixed;bottom:calc(var(--safe-b) + 12px);left:12px;right:12px;z-index:100;
+  height:62px;
+  display:flex;align-items:center;justify-content:space-around;
   background:rgba(255,255,255,.95);
   backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);
-  border-radius:28px 28px 0 0;
-  box-shadow:0 -4px 24px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.9) inset;
-  border:.5px solid rgba(0,0,0,.06);
-  border-bottom:none;
+  border-radius:32px;
+  box-shadow:0 4px 24px rgba(0,0,0,.10),0 1px 0 rgba(255,255,255,.9) inset;
+  border:.5px solid rgba(0,0,0,.07);
+  padding:4px 8px;
+  overflow:hidden;
 }
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  background:none;border:none;cursor:pointer;padding:4px 4px;border-radius:16px;
-  transition:background .18s;}
+  background:none;border:none;cursor:pointer;padding:6px 2px;border-radius:22px;
+  transition:background .18s;min-width:0;}
 .tab:active{opacity:.6;}
 .tab-ico svg{width:22px;height:22px;stroke:var(--text3);fill:none;stroke-width:1.8;transition:stroke .18s;}
 .tab.active .tab-ico svg{stroke:var(--blue);}
@@ -136,11 +128,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .tab-fab{width:48px;height:48px;border-radius:50%;
   background:linear-gradient(135deg,#007aff,#0055d4);
   box-shadow:0 3px 14px rgba(0,122,255,.45);
-  display:flex;align-items:center;justify-content:center;margin-top:-10px;}
+  display:flex;align-items:center;justify-content:center;}
 .tab-fab-plus{color:white;font-size:26px;font-weight:300;line-height:1;display:block;transition:transform .25s cubic-bezier(.4,0,.2,1);}
 .fab-open .tab-fab-plus{transform:rotate(45deg);}
 /* FAB menu */
-.fab-menu{position:fixed;bottom:calc(var(--safe-b) + 80px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:10px;z-index:95;pointer-events:none;align-items:center;}
+.fab-menu{position:fixed;bottom:calc(var(--safe-b) + 86px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:10px;z-index:95;pointer-events:none;align-items:center;}
 /* CARDS */
 .sec{margin:0 16px 20px;}
 .sec-lbl{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;padding:0 4px 8px;font-family:-apple-system,sans-serif;}
@@ -477,7 +469,7 @@ tes données sur tous tes appareils</div>
 <div class="screen" id="s-wish">
   <div class="hdr">
     <div class="hdr-row">
-      <div class="hdr-title">🛒 <span id="lbl-wishlist-title">Liste de courses</span></div>
+      <div class="hdr-title"><span id="lbl-wishlist-title">Courses</span></div>
     </div>
   </div>
   <div class="scroll" id="wishListEl"></div>
@@ -641,9 +633,9 @@ tes données sur tous tes appareils</div>
 <div class="screen" id="s-stats">
   <div class="hdr">
     <div class="hdr-row">
-      <button class="hdr-btn" onclick="goTo('home')">‹ <span id="lbl-back">Retour</span></button>
-      <div class="hdr-title" id="lbl-stats-title">Statistiques</div>
-      <div style="width:60px"></div>
+      <button class="hdr-btn" onclick="goTo('home')" style="min-width:70px">‹ <span id="lbl-back">Retour</span></button>
+      <div style="font-size:17px;font-weight:600;letter-spacing:-.3px;" id="lbl-stats-title">Statistiques</div>
+      <div style="min-width:70px"></div>
     </div>
   </div>
   <div class="scroll" id="statsContent"></div>
@@ -691,7 +683,7 @@ tes données sur tous tes appareils</div>
 <div class="screen" id="s-maint">
   <div class="hdr">
     <div class="hdr-row">
-      <div class="hdr-title">🔧 <span id="lbl-maint-title">Entretien</span></div>
+      <div class="hdr-title"><span id="lbl-maint-title">Entretien</span></div>
     </div>
   </div>
   <div class="scroll" id="maintListEl"></div>
@@ -1712,15 +1704,15 @@ function renderStatsScreen(){
     if(chartPoints.length===0) chartPoints=[{lbl:'',val:0,showLbl:true}];
   }
   const maxV=Math.max(...chartPoints.map(p=>p.val),1);
-  const W=340,H=110,pad=8;
+  const W=340,H=100,pad=8,LBLH=18;
   const n=chartPoints.length;
   const barW=Math.max(2,Math.floor((W-pad*2)/n)-2);
   const bars=chartPoints.map((p,i)=>{
-    const bh=Math.max(3,Math.round((p.val/maxV)*(H-20)));
+    const bh=Math.max(3,Math.round((p.val/maxV)*(H-16)));
     const x=pad+i*((W-pad*2)/n);
-    const y=H-bh-2;
+    const y=H-bh;
     return `<rect x="${x.toFixed(1)}" y="${y}" width="${barW}" height="${bh}" rx="3" fill="var(--blue)" opacity="${p.val>0?1:.15}"/>
-    ${p.showLbl!==false?`<text x="${(x+barW/2).toFixed(1)}" y="${H+2}" text-anchor="middle" font-size="8" fill="var(--text3)" font-family="-apple-system,sans-serif">${p.lbl}</text>`:''}`;
+    ${p.showLbl!==false?`<text x="${(x+barW/2).toFixed(1)}" y="${H+LBLH}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="-apple-system,sans-serif">${p.lbl}</text>`:''}`;
   }).join('');
 
   const periods=['1S','1M','1Y','ALL'];
@@ -1732,7 +1724,7 @@ function renderStatsScreen(){
     <div class="sec" style="margin-bottom:0">
       <div class="card" style="padding:14px 16px 10px">
         <div style="display:flex;background:var(--bg);border-radius:22px;padding:3px;margin-bottom:14px">${periodBtns}</div>
-        <svg viewBox="0 0 ${W} ${H+10}" width="100%" style="overflow:visible">${bars}</svg>
+        <svg viewBox="0 0 ${W} ${H+LBLH+4}" width="100%" style="overflow:visible">${bars}</svg>
       </div>
     </div>
     <div style="height:14px"></div>
