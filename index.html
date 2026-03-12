@@ -84,8 +84,11 @@ window.dispatchEvent(new Event('fb-ready'));
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;
   -webkit-font-smoothing:antialiased;font-size:16px;}
-.screen{position:fixed;inset:0;display:none;flex-direction:column;padding-bottom:var(--tabh);background:var(--bg);}
-.screen.active{display:flex;}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;padding-bottom:var(--tabh);background:var(--bg);
+  pointer-events:none;opacity:0;transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .32s;}
+.screen.active{pointer-events:auto;opacity:1;transform:translateX(0);}
+.screen.slide-back{transform:translateX(-28%);opacity:1;}
+.screen.no-anim{transition:none !important;}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 /* HDR */
 .hdr{flex-shrink:0;padding-top:var(--safe-t);background:rgba(242,242,247,.88);
@@ -153,7 +156,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .stat.full:active{opacity:.7;}
 .stat-lbl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;font-family:-apple-system,sans-serif;}
 .stat-val{font-size:26px;font-weight:700;letter-spacing:-.6px;line-height:1;}
-.stat-val.red{color:var(--red);}
+.stat-val.red{color:var(--red);}.stat-val.blue{color:var(--blue);}
 .stat-sub{font-size:11px;color:var(--text3);margin-top:3px;font-family:-apple-system,sans-serif;}
 /* CHART */
 .chart-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:.5px solid var(--border);}
@@ -215,7 +218,7 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
 .big-stat{background:var(--card);border-radius:var(--r);padding:20px 18px;margin:0 16px 12px;}
 .big-stat-lbl{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;font-family:-apple-system,sans-serif;}
 .big-stat-val{font-size:36px;font-weight:700;letter-spacing:-1px;color:var(--text);}
-.big-stat-val.red{color:var(--red);}
+.big-stat-val.red{color:var(--red);}.big-stat-val.blue{color:var(--blue);}
 .big-stat-sub{font-size:13px;color:var(--text3);margin-top:4px;font-family:-apple-system,sans-serif;}
 .mbar-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:.5px solid var(--border);font-family:-apple-system,sans-serif;}
 .mbar-row:last-child{border-bottom:none;}
@@ -312,9 +315,12 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
 .sync-dot.off{background:var(--orange);}
 /* WISH */
 .wish-check-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--text2);}
+/* PRESET BTN */
+.preset-btn{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:500;color:var(--blue);font-family:-apple-system,sans-serif;cursor:pointer;transition:all .15s;}
+.preset-btn:active{background:var(--blue);color:white;border-color:var(--blue);}
 
-/* FAB + BUTTON (floating, bottom-center) */
-.fab-float{position:fixed;bottom:calc(var(--tabh) + 16px);left:50%;transform:translateX(-50%);z-index:96;width:56px;height:56px;border-radius:50%;background:var(--blue);border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,122,255,.5),inset 0 1px 0 rgba(255,255,255,.3);cursor:pointer;transition:box-shadow .15s;}
+/* FAB + BUTTON (floating, bottom-right) */
+.fab-float{position:fixed;bottom:calc(var(--tabh) + 16px);right:20px;z-index:96;width:56px;height:56px;border-radius:50%;background:var(--blue);border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,122,255,.5),inset 0 1px 0 rgba(255,255,255,.3);cursor:pointer;transition:box-shadow .15s;}
 .fab-float:active{box-shadow:0 2px 8px rgba(0,122,255,.35);}
 .tab-fab-plus{color:white;font-size:26px;font-weight:300;line-height:1;display:block;transition:transform .25s cubic-bezier(.4,0,.2,1);}
 .fab-open .tab-fab-plus{transform:rotate(45deg);}
@@ -322,14 +328,15 @@ input[type="date"].fi{-webkit-appearance:none;text-align:left;display:block;widt
 /* FAB OVERLAY */
 .fab-overlay{position:fixed;inset:0;z-index:90;display:none;}
 .fab-overlay.show{display:block;}
-.fab-menu{position:fixed;bottom:calc(var(--tabh) + 84px);left:50%;transform:translateX(-50%);display:flex;flex-direction:row;gap:28px;z-index:95;pointer-events:none;align-items:flex-end;}
-.fab-item{display:flex;flex-direction:column;align-items:center;gap:5px;opacity:0;transform:translateY(14px) scale(.88);transition:opacity .2s,transform .2s;pointer-events:none;}
+.fab-menu{position:fixed;bottom:calc(var(--tabh) + 84px);right:20px;display:flex;flex-direction:column;gap:12px;z-index:95;pointer-events:none;align-items:flex-end;}
+.fab-item{display:flex;flex-direction:row;align-items:center;gap:10px;opacity:0;transform:translateY(14px) scale(.88);transition:opacity .2s,transform .2s;pointer-events:none;}
 .fab-item.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
-.fab-item:nth-child(1){transition-delay:.03s;}
-.fab-item:nth-child(2){transition-delay:.0s;}
-.fab-btn{width:50px;height:50px;border-radius:50%;border:none;background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.14);color:var(--blue);}
+.fab-item:nth-child(1){transition-delay:.06s;}
+.fab-item:nth-child(2){transition-delay:.03s;}
+.fab-item:nth-child(3){transition-delay:.0s;}
+.fab-btn{width:50px;height:50px;border-radius:50%;border:none;background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.14);color:var(--blue);flex-shrink:0;}
 .fab-btn:active{opacity:.7;}
-.fab-lbl{font-size:11px;font-weight:600;color:white;background:rgba(0,0,0,.52);padding:3px 8px;border-radius:20px;white-space:nowrap;backdrop-filter:blur(6px);}
+.fab-lbl{font-size:13px;font-weight:600;color:white;background:rgba(0,0,0,.52);padding:4px 10px;border-radius:20px;white-space:nowrap;backdrop-filter:blur(6px);}
 
 /* TAB BADGE */
 .tab-badge{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;background:var(--red);border-radius:8px;font-size:10px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;padding:0 4px;border:1.5px solid var(--bg);}
@@ -419,7 +426,7 @@ tes données sur tous tes appareils</div>
       <div class="stat full" onclick="goTo('stats')">
         <div>
           <div class="stat-lbl" id="lbl-total-spent">Total dépensé</div>
-          <div class="stat-val red" id="sTotal">¥0</div>
+          <div class="stat-val blue" id="sTotal">¥0</div>
           <div class="stat-sub" id="lbl-tap-stats">Appuyer pour les statistiques</div>
         </div>
         <span style="font-size:22px;opacity:.3">›</span>
@@ -461,7 +468,6 @@ tes données sur tous tes appareils</div>
   <div class="hdr">
     <div class="hdr-row">
       <div class="hdr-title">🛒 <span id="lbl-wishlist-title">Liste de courses</span></div>
-      <button class="hdr-circ" onclick="goToAddWish()">+</button>
     </div>
   </div>
   <div class="scroll" id="wishListEl"></div>
@@ -686,7 +692,6 @@ tes données sur tous tes appareils</div>
   <div class="hdr">
     <div class="hdr-row">
       <div class="hdr-title">🔧 <span id="lbl-maint-title">Entretien</span></div>
-      <button class="hdr-circ" onclick="openMaintForm()">+</button>
     </div>
   </div>
   <div class="scroll" id="maintListEl"></div>
@@ -751,15 +756,20 @@ tes données sur tous tes appareils</div>
       <!-- Prochaine échéance -->
       <div class="form-sec">
         <label class="form-lbl">Prochaine échéance</label>
-        <div class="card">
-          <div class="fi-row">
+        <div class="card" style="margin-bottom:10px">
+          <div class="fi-row" style="border-radius:var(--r)">
             <span class="fi-ico">⏰</span>
             <input class="fi" type="date" id="maintNextDate" style="text-align:left">
           </div>
-          <div class="fi-row">
-            <span class="fi-ico">📏</span>
-            <input class="fi" type="number" id="maintNextKm" placeholder="Kilométrage prévu (optionnel)" inputmode="numeric">
-          </div>
+        </div>
+        <!-- Presets -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="preset-btn" onclick="setMaintPreset(7)">1 sem.</button>
+          <button class="preset-btn" onclick="setMaintPreset(30)">1 mois</button>
+          <button class="preset-btn" onclick="setMaintPreset(90)">3 mois</button>
+          <button class="preset-btn" onclick="setMaintPreset(180)">6 mois</button>
+          <button class="preset-btn" onclick="setMaintPreset(365)">1 an</button>
+          <button class="preset-btn" onclick="setMaintPreset(730)">2 ans</button>
         </div>
       </div>
       <!-- Notes -->
@@ -792,6 +802,12 @@ tes données sur tous tes appareils</div>
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
     </button>
     <div class="fab-lbl">Dépense</div>
+  </div>
+  <div class="fab-item" id="fabItemMaint">
+    <button class="fab-btn" onclick="closeFab();openMaintForm()">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+    </button>
+    <div class="fab-lbl">Entretien</div>
   </div>
   <div class="fab-item" id="fabItemWish">
     <button class="fab-btn" onclick="closeFab();goToAddWish()">
@@ -940,6 +956,7 @@ const STRINGS = {
     all:'All',no_data:'No data',
     total_all:'All-time total',records:'expenses recorded',
     avg_month:'Avg / month',avg_day:'Avg / day',best_month:'Most expensive month',worst_month:'Least expensive month',
+    this_year:'This year',this_month:'This month',
     by_year:'By year',last_12:'Last 12 months',by_cat:'By category',
     delete:'Delete',bought:'✓',unbought:'↩',
     cats:{huile:'Oil',lavage:'Wash',entretien:'Service',pieces:'Parts',carburant:'Fuel',assurance:'Insurance',wishlist:'To buy',autre:'Other'},
@@ -1214,6 +1231,8 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 document.getElementById('dDate').valueAsDate=new Date();
 ['fr','en','ja'].forEach(x=>document.getElementById('lp-'+x).classList.toggle('active',x===lang));
 applyI18n();
+// Activate home screen without animation
+(()=>{const h=document.getElementById('s-home');if(h){h.classList.add('no-anim','active');setTimeout(()=>h.classList.remove('no-anim'),50);}})();
 renderAll();
 
 // ── FIREBASE AUTH LISTENER ──────────────────────────────────────────────────
@@ -1285,20 +1304,67 @@ function renderAll(){
 }
 
 /* NAV */
-const SWIPE_TABS=['home','list','maint','wish','stats','settings'];
+const SWIPE_TABS=['home','list','maint','wish','settings'];
+const TAB_ORDER=['home','list','maint','wish','settings'];
+let _currentTab='home';
 
-function goTo(tab){
+function goTo(tab, noAnim=false){
   closeFab();
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const prev=_currentTab;
+  const prevEl=document.getElementById('s-'+prev);
+  const nextEl=document.getElementById('s-'+tab);
+  if(!nextEl) return;
+
+  // Determine direction: push right (slide in from right) or pop left (slide out to right)
+  const prevIdx=TAB_ORDER.indexOf(prev), nextIdx=TAB_ORDER.indexOf(tab);
+  // Forms/sub-screens always push forward (slide from right)
+  const isPush = nextIdx===-1 || prevIdx===-1 || nextIdx > prevIdx
+    || ['add','vinfo','stats','maint-form'].includes(tab);
+  const isPop = !isPush && prevIdx > nextIdx;
+
+  if(noAnim){
+    document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active','slide-back');s.style.transform='';s.style.opacity='';});
+    nextEl.classList.add('no-anim','active');
+    setTimeout(()=>nextEl.classList.remove('no-anim'),50);
+  } else if(prev===tab){
+    // same tab, do nothing
+    return;
+  } else if(isPush){
+    // Outgoing: slide slightly left (iOS "push back" effect)
+    if(prevEl && prevEl.classList.contains('active')){
+      prevEl.classList.add('slide-back');
+      prevEl.classList.remove('active');
+    }
+    // Incoming: slide in from right
+    nextEl.style.transform='translateX(100%)'; nextEl.style.opacity='1';
+    nextEl.classList.remove('no-anim');
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        nextEl.classList.add('active');
+        nextEl.style.transform=''; nextEl.style.opacity='';
+        setTimeout(()=>{ document.querySelectorAll('.screen').forEach(s=>{if(s!==nextEl){s.classList.remove('active','slide-back');s.style.transform='';s.style.opacity='';}});},340);
+      });
+    });
+  } else {
+    // Pop: outgoing slides out to right, incoming comes from slight left
+    if(prevEl && prevEl.classList.contains('active')){
+      prevEl.style.transform='translateX(100%)'; prevEl.style.opacity='0';
+      setTimeout(()=>{ prevEl.classList.remove('active','slide-back'); prevEl.style.transform=''; prevEl.style.opacity='';},340);
+    }
+    nextEl.classList.remove('slide-back');
+    nextEl.classList.add('active');
+  }
+
+  _currentTab=tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const sc=document.getElementById('s-'+tab);
-  if(sc) sc.classList.add('active');
   const tb=document.getElementById('tab-'+tab);
   if(tb) tb.classList.add('active');
-  // pour maint-form, on garde maint actif dans la tab
   if(tab==='maint-form') document.getElementById('tab-maint')?.classList.add('active');
   if(tab==='stats') renderStatsScreen();
 }
+
+// Forms open without tab transition animation
+function goToNoAnim(tab){ goTo(tab,true); }
 
 /* FORM */
 function buildCatRow(){
@@ -1326,8 +1392,8 @@ function resetForm(wish){
   buildCatRow(); buildShopRow();
 }
 
-function goToAdd(){ resetForm(false); goTo('add'); }
-function goToAddWish(){ resetForm(true); goTo('add'); }
+function goToAdd(){ resetForm(false); goToNoAnim('add'); }
+function goToAddWish(){ resetForm(true); goToNoAnim('add'); }
 
 function openEdit(id,wish=false){
   const arr=wish?db.wish:ce();
@@ -1349,7 +1415,7 @@ function openEdit(id,wish=false){
   document.getElementById('submitBtn').textContent=s('lbl-save-hdr');
   cat=e.cat||(wish?'pieces':'huile'); selectedShop=e.shop||null;
   buildCatRow(); buildShopRow();
-  goTo('add');
+  goToNoAnim('add');
 }
 
 function cancelForm(){ goTo(isWishMode?'wish':(editingId?'list':'home')); }
@@ -1651,7 +1717,7 @@ function renderStatsScreen(){
   const g2=`display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 12px`;
   document.getElementById('statsContent').innerHTML=`
     <div style="padding-top:14px"></div>
-    <div class="big-stat"><div class="big-stat-lbl">${s('total_all')}</div><div class="big-stat-val red">${fmt(total)}</div><div class="big-stat-sub">${all.length} ${s('records')}</div></div>
+    <div class="big-stat"><div class="big-stat-lbl">${s('total_all')}</div><div class="big-stat-val blue">${fmt(total)}</div><div class="big-stat-sub">${all.length} ${s('records')}</div></div>
     <div style="${g2}">
       <div class="big-stat" style="margin:0"><div class="big-stat-lbl">${s('avg_month')}</div><div class="big-stat-val" style="font-size:24px">${fmt(Math.round(avgMonth))}</div></div>
       <div class="big-stat" style="margin:0"><div class="big-stat-lbl">${s('avg_day')}</div><div class="big-stat-val" style="font-size:24px">${fmt(Math.round(avgDay))}</div></div>
@@ -1659,7 +1725,7 @@ function renderStatsScreen(){
       <div class="big-stat" style="margin:0"><div class="big-stat-lbl">${s('this_month')}</div><div class="big-stat-val" style="font-size:24px">${fmt(month)}</div></div>
     </div>
     <div style="${g2}">
-      <div class="big-stat" style="margin:0"><div class="big-stat-lbl">${s('best_month')}</div><div class="big-stat-val red" style="font-size:20px">${fmt(bestV)}</div><div class="big-stat-sub">${moLbl(bestK)}</div></div>
+      <div class="big-stat" style="margin:0"><div class="big-stat-lbl">${s('best_month')}</div><div class="big-stat-val blue" style="font-size:20px">${fmt(bestV)}</div><div class="big-stat-sub">${moLbl(bestK)}</div></div>
       <div class="big-stat" style="margin:0"><div class="big-stat-lbl">${s('worst_month')}</div><div class="big-stat-val" style="font-size:20px;color:var(--green)">${fmt(worstV)}</div><div class="big-stat-sub">${moLbl(worstK)}</div></div>
     </div>
     ${Object.keys(byYear).length>1?`<div class="sec"><div class="sec-lbl">${s('by_year')}</div><div class="card">${Object.entries(byYear).sort((a,b)=>b[0]-a[0]).map(([y,v])=>`<div class="mbar-row"><div class="mbar-lbl">${y}</div><div class="mbar-track"><div class="mbar-fill" style="width:${(v/total*100).toFixed(1)}%"></div></div><div class="mbar-amt">${fmt(v)}</div></div>`).join('')}</div></div>`:''}
@@ -1973,6 +2039,19 @@ function formatDate(dateStr){
 }
 
 let _maintEditId=null;
+function setMaintPreset(days){
+  const base = document.getElementById('maintDate').value
+    ? new Date(document.getElementById('maintDate').value)
+    : new Date();
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  document.getElementById('maintNextDate').value = d.toISOString().split('T')[0];
+  // Flash highlight
+  const el=document.getElementById('maintNextDate');
+  el.style.color='var(--blue)';
+  setTimeout(()=>el.style.color='',600);
+}
+
 function openMaintForm(){
   _maintEditId=null;
   document.getElementById('maintFormTitle').textContent='Nouvel entretien';
@@ -1983,9 +2062,8 @@ function openMaintForm(){
   document.getElementById('maintKm').value='';
   document.getElementById('maintCost').value='';
   document.getElementById('maintNextDate').value='';
-  document.getElementById('maintNextKm').value='';
   document.getElementById('maintNotes').value='';
-  goTo('maint-form');
+  goToNoAnim('maint-form');
 }
 
 function openMaintEdit(id){
@@ -1999,9 +2077,8 @@ function openMaintEdit(id){
   document.getElementById('maintKm').value=item.km||'';
   document.getElementById('maintCost').value=item.cost||'';
   document.getElementById('maintNextDate').value=item.nextDate||'';
-  document.getElementById('maintNextKm').value=item.nextKm||'';
   document.getElementById('maintNotes').value=item.notes||'';
-  goTo('maint-form');
+  goToNoAnim('maint-form');
 }
 
 function submitMaint(){
@@ -2013,7 +2090,6 @@ function submitMaint(){
     km:document.getElementById('maintKm').value.trim(),
     cost:parseFloat(document.getElementById('maintCost').value)||0,
     nextDate:document.getElementById('maintNextDate').value,
-    nextKm:document.getElementById('maintNextKm').value.trim(),
     notes:document.getElementById('maintNotes').value.trim(),
   };
   if(_maintEditId){
